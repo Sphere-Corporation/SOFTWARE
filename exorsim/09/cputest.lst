@@ -1,0 +1,1881 @@
+0001                         *
+0002                         *  MC6809 CPU Emulation Validation
+0003                         *
+0004                         * Tested on an SGS Thomson EF6809P Processor
+0005                         *
+0006                         * W. Schwotzer                     20.07.2003
+0007                         *
+0008                         
+0009                         *PDATA1 EQU   2     ; Output EOT terminated string: ASSIST09 SWI
+0010                         
+0011 fcf5                    ACIAD  EQU   $FCF5
+0012                         
+0013 8000                    EXTREG EQU   $8000
+0014 0004                    EOT    EQU   $4
+0015                         
+0016 2000                           ORG   $2000
+0017                         
+0018 2000 20 0f              BEGIN  BRA   START
+0019                         
+0020 2002 a6 80              PSTRNG	LDA	,X+
+0021 2004 81 04              	CMPA	#EOT
+0022 2006 27 05              	BEQ	PSDONE
+0023 2008 b7 fc f5           	STA	ACIAD
+0024 200b 20 f5              	BRA	PSTRNG
+0025 200d 39                 PSDONE	RTS
+0026                         
+0027                         
+0028 200e 01                 VERSIO FCB   1
+0029 200f 00 00              REG161 FDB   0
+0030                         
+0031                         
+0032                         * Call from ASSIST or something
+0033 2011 7f 33 05           START  CLR   ERRFLG ; Clear Error flag
+0034 2014 bd 22 95                  JSR   TDAA
+0035                         *
+0036                         * Test Addressing modes
+0037 2017 bd 2d ce                  JSR  TAD1
+0038 201a bd 2e 22                  JSR  TAD2
+0039 201d bd 2e 41                  JSR  TAD3
+0040 2020 bd 2e 6b                  JSR  TAD4
+0041 2023 bd 2e 8b                  JSR  TAD5
+0042 2026 bd 2e b5                  JSR  TAD6
+0043 2029 bd 2e e0                  JSR  TAD7
+0044 202c bd 2f 0c                  JSR  TAD8
+0045 202f bd 2f 42                  JSR  TAD9
+0046 2032 bd 2f 75                  JSR  TADA
+0047 2035 bd 2f 9c                  JSR  TADB
+0048 2038 bd 2f ca                  JSR  TADI1
+0049 203b bd 30 34                  JSR  TADI3
+0050 203e bd 30 5e                  JSR  TADI5
+0051 2041 bd 30 88                  JSR  TADI6
+0052 2044 bd 30 b9                  JSR  TADI7
+0053 2047 bd 30 ea                  JSR  TADI8
+0054 204a bd 31 20                  JSR  TADI9
+0055 204d bd 31 54                  JSR  TADIA
+0056 2050 bd 31 83                  JSR  TADIB
+0057 2053 bd 31 b1                  JSR  TADIC
+0058                         * Test Instructions
+0059 2056 bd 24 04                  JSR   TNEG
+0060 2059 bd 24 43                  JSR   TCOM
+0061 205c bd 26 92                  JSR   TDEC
+0062 205f bd 26 cc                  JSR   TINC
+0063 2062 bd 27 06                  JSR   TCLR
+0064 2065 bd 27 c8                  JSR   TADD
+0065 2068 bd 27 3c                  JSR   TADDD
+0066 206b bd 28 2a                  JSR   TADC
+0067 206e bd 20 b4                  JSR   TMUL
+0068 2071 bd 21 15                  JSR   TSEX
+0069 2074 bd 29 2e                  JSR   TSUB
+0070 2077 bd 2b 22                  JSR   TSUBD
+0071 207a bd 29 bc                  JSR   TSBC
+0072 207d bd 22 95                  JSR   TDAA
+0073 2080 bd 29 0c                  JSR   TCMP
+0074 2083 bd 2c 02                  JSR   TCMPD
+0075 2086 bd 21 53                  JSR   TTST
+0076 2089 bd 22 55                  JSR   TBIT
+0077 208c bd 24 86                  JSR   TLSR
+0078 208f bd 24 e4                  JSR   TLSL
+0079 2092 bd 25 3e                  JSR   TASR
+0080 2095 bd 26 19                  JSR   TROL
+0081 2098 bd 25 9c                  JSR   TROR
+0082 209b bd 21 84                  JSR   TLD
+0083 209e bd 21 a3                  JSR   TST
+0084 20a1 bd 21 c5                  JSR   TLDD
+0085 20a4 bd 21 fd                  JSR   TSTD
+0086 20a7 bd 22 20                  JSR   TLEA
+0087 20aa bd 2c 27                  JSR   TTFR
+0088 20ad bd 2c cf                  JSR   TEXG
+0089                         *
+0090 20b0 bd 32 f7                  JSR   OUTSUC
+0091                         *	JMP START
+0092 20b3 39                        RTS
+0093                         *       JMP  WARMS
+0094                         
+0095                         **************************************************
+0096                         * Test MUL
+0097                         **************************************************
+0098 20b4 ce 21 0f           TMUL   LDU   #LMUL
+0099 20b7 8e 20 d8                  LDX   #TBMUL
+0100 20ba ec 81              TMUL1  LDD   ,X++
+0101 20bc 3d                        MUL
+0102 20bd 1f ab                     TFR   CC,DP
+0103 20bf 10 a3 81                  CMPD  ,X++
+0104 20c2 10 26 12 20               LBNE  OUTERR
+0105 20c6 1f b9                     TFR   DP,B
+0106 20c8 c4 05                     ANDB  #$05   ; Only check Bits ZC
+0107 20ca e1 80                     CMPB  ,X+
+0108 20cc 10 26 12 16               LBNE  OUTERR
+0109 20d0 8c 21 0f                  CMPX  #LMUL
+0110 20d3 10 26 ff e3               LBNE  TMUL1
+0111 20d7 39                        RTS
+0112                         
+0113 20d8 00 00 00 00        TBMUL  FDB   $0000,$0000
+0114 20dc 04                        FCB   $04
+0115 20dd 80 80 40 00               FDB   $8080,$4000
+0116 20e1 00                        FCB   $00
+0117 20e2 01 ff 00 ff               FDB   $01FF,$00FF
+0118 20e6 01                        FCB   $01
+0119 20e7 ff 01 00 ff               FDB   $FF01,$00FF
+0120 20eb 01                        FCB   $01
+0121 20ec 7f 81 3f ff               FDB   $7F81,$3FFF
+0122 20f0 01                        FCB   $01
+0123 20f1 81 7f 3f ff               FDB   $817F,$3FFF
+0124 20f5 01                        FCB   $01
+0125 20f6 c0 40 30 00               FDB   $C040,$3000
+0126 20fa 00                        FCB   $00
+0127 20fb 40 c0 30 00               FDB   $40C0,$3000
+0128 20ff 00                        FCB   $00
+0129 2100 ff ff fe 01               FDB   $FFFF,$FE01
+0130 2104 00                        FCB   $00
+0131 2105 7f 7f 3f 01               FDB   $7F7F,$3F01
+0132 2109 00                        FCB   $00
+0133 210a 01 01 00 01               FDB   $0101,$0001
+0134 210e 00                        FCB   $00
+0135 210f 4d 55 4c           LMUL   FCC   'MUL'
+0136 2112 0d 0a 04           	FCB	13,10,EOT
+0137                         
+0138                         **************************************************
+0139                         * Test SEX
+0140                         **************************************************
+0141 2115 ce 21 4d           TSEX   LDU   #LSEX
+0142 2118 8e 21 39                  LDX   #TBSEX
+0143 211b e6 80              TSEX1  LDB   ,X+
+0144 211d 1d                        SEX
+0145 211e 1f ab                     TFR   CC,DP
+0146 2120 10 a3 81                  CMPD  ,X++
+0147 2123 10 26 11 bf               LBNE  OUTERR
+0148 2127 1f b9                     TFR   DP,B
+0149 2129 c4 0c                     ANDB  #$0C   ; Only check Bits NZ
+0150 212b e1 80                     CMPB  ,X+
+0151 212d 10 26 11 b5               LBNE  OUTERR
+0152 2131 8c 21 4d                  CMPX  #LSEX
+0153 2134 10 26 ff e3               LBNE  TSEX1
+0154 2138 39                        RTS
+0155                         
+0156                         
+0157 2139 00                 TBSEX  FCB   $00
+0158 213a 00 00                     FDB   $0000
+0159 213c 04                        FCB   $04
+0160 213d 01                        FCB   $01
+0161 213e 00 01                     FDB   $0001
+0162 2140 00                        FCB   $00
+0163 2141 7f                        FCB   $7F
+0164 2142 00 7f                     FDB   $007F
+0165 2144 00                        FCB   $00
+0166 2145 80                        FCB   $80
+0167 2146 ff 80                     FDB   $FF80
+0168 2148 08                        FCB   $08
+0169 2149 ff                        FCB   $FF
+0170 214a ff ff                     FDB   $FFFF
+0171 214c 08                        FCB   $08
+0172 214d 53 45 58           LSEX   FCC   'SEX'
+0173 2150 0d 0a 04           	FCB	13,10,EOT
+0174                         
+0175                         **************************************************
+0176                         * Test TST
+0177                         **************************************************
+0178 2153 ce 21 7e           TTST   LDU   #LTST
+0179 2156 8e 21 6e                  LDX   #TBTST
+0180 2159 a6 80              TTST1  LDA   ,X+
+0181 215b 4d                        TSTA
+0182 215c 1f a9                     TFR   CC,B
+0183 215e c4 0e                     ANDB  #$0E   ; Only check Bits NZV
+0184 2160 e1 80                     CMPB  ,X+
+0185 2162 10 26 11 80               LBNE  OUTERR
+0186 2166 8c 21 7e                  CMPX  #LTST
+0187 2169 10 26 ff ec               LBNE  TTST1
+0188 216d 39                        RTS
+0189                         
+0190 216e 00 04              TBTST  FCB   $00,$04
+0191 2170 80 08                     FCB   $80,$08
+0192 2172 01 00                     FCB   $01,$00
+0193 2174 ff 08                     FCB   $FF,$08
+0194 2176 7f 00                     FCB   $7F,$00
+0195 2178 81 08                     FCB   $81,$08
+0196 217a c0 08                     FCB   $C0,$08
+0197 217c 40 00                     FCB   $40,$00
+0198 217e 54 53 54           LTST   FCC   'TST'
+0199 2181 0d 0a 04           	FCB	13,10,EOT
+0200                         
+0201                         **************************************************
+0202                         * Test LD
+0203                         **************************************************
+0204 2184 ce 21 9e           TLD    LDU   #LLD
+0205 2187 8e 21 6e                  LDX   #TBTST
+0206 218a a6 80              TLD1   LDA   ,X+
+0207 218c 1f a9                     TFR   CC,B
+0208 218e c4 0e                     ANDB  #$0E   ; Only check Bits NZV
+0209 2190 e1 80                     CMPB  ,X+
+0210 2192 10 26 11 50               LBNE  OUTERR
+0211 2196 8c 21 7e                  CMPX  #LTST
+0212 2199 10 26 ff ed               LBNE  TLD1
+0213 219d 39                        RTS
+0214 219e 4c 44              LLD    FCC   'LD'
+0215 21a0 0d 0a 04           	FCB	13,10,EOT
+0216                         
+0217                         **************************************************
+0218                         * Test ST
+0219                         **************************************************
+0220 21a3 ce 21 c0           TST    LDU   #LST
+0221 21a6 8e 21 6e                  LDX   #TBTST
+0222 21a9 a6 80              TST1   LDA   ,X+
+0223 21ab b7 80 00                  STA   EXTREG
+0224 21ae 1f a9                     TFR   CC,B
+0225 21b0 c4 0e                     ANDB  #$0E   ; Only check Bits NZV
+0226 21b2 e1 80                     CMPB  ,X+
+0227 21b4 10 26 11 2e               LBNE  OUTERR
+0228 21b8 8c 21 7e                  CMPX  #LTST
+0229 21bb 10 26 ff ea               LBNE  TST1
+0230 21bf 39                        RTS
+0231 21c0 53 54              LST    FCC   'ST'
+0232 21c2 0d 0a 04           	FCB	13,10,EOT
+0233                         
+0234                         **************************************************
+0235                         * Test LDD
+0236                         **************************************************
+0237 21c5 ce 21 f7           TLDD   LDU   #LLDD
+0238 21c8 8e 21 df                  LDX   #TBLDD
+0239 21cb ec 81              TLDD1  LDD   ,X++
+0240 21cd 1f a9                     TFR   CC,B
+0241 21cf c4 0e                     ANDB  #$0E   ; Only check Bits NZV
+0242 21d1 e1 80                     CMPB  ,X+
+0243 21d3 10 26 11 0f               LBNE  OUTERR
+0244 21d7 8c 21 f7                  CMPX  #LLDD
+0245 21da 10 26 ff ed               LBNE  TLDD1
+0246 21de 39                        RTS
+0247 21df 00 00              TBLDD  FDB   $0000
+0248 21e1 04                        FCB   $04
+0249 21e2 80 00                     FDB   $8000
+0250 21e4 08                        FCB   $08
+0251 21e5 00 01                     FDB   $0001
+0252 21e7 00                        FCB   $00
+0253 21e8 ff ff                     FDB   $FFFF
+0254 21ea 08                        FCB   $08
+0255 21eb 7f ff                     FDB   $7FFF
+0256 21ed 00                        FCB   $00
+0257 21ee 80 01                     FDB   $8001
+0258 21f0 08                        FCB   $08
+0259 21f1 c0 00                     FDB   $C000
+0260 21f3 08                        FCB   $08
+0261 21f4 40 00                     FDB   $4000
+0262 21f6 00                        FCB   $00
+0263 21f7 4c 44 44           LLDD   FCC   'LDD'
+0264 21fa 0d 0a 04           	FCB	13,10,EOT
+0265                         
+0266                         **************************************************
+0267                         * Test STD
+0268                         **************************************************
+0269 21fd ce 22 1a           TSTD   LDU   #LSTD
+0270 2200 8e 21 df                  LDX   #TBLDD
+0271 2203 ec 81              TSTD1  LDD   ,X++
+0272 2205 fd 80 00                  STD   EXTREG
+0273 2208 1f a9                     TFR   CC,B
+0274 220a c4 0e                     ANDB  #$0E   ; Only check Bits NZV
+0275 220c e1 80                     CMPB  ,X+
+0276 220e 10 26 10 d4               LBNE  OUTERR
+0277 2212 8c 21 f7                  CMPX  #LLDD
+0278 2215 10 26 ff ea               LBNE  TSTD1
+0279 2219 39                        RTS
+0280 221a 53 54 44           LSTD   FCC   'STD'
+0281 221d 0d 0a 04           	FCB	13,10,EOT
+0282                         
+0283                         **************************************************
+0284                         * Test LEA
+0285                         **************************************************
+0286 2220 ce 22 4f           TLEA   LDU   #LLEA
+0287 2223 8e 22 3d                  LDX   #TBLEA
+0288 2226 10 ae 81           TLEA1  LDY   ,X++
+0289 2229 31 a4                     LEAY  ,Y
+0290 222b 1f a9                     TFR   CC,B
+0291 222d c4 04                     ANDB  #$04   ; Only check Bit Z
+0292 222f e1 80                     CMPB  ,X+
+0293 2231 10 26 10 b1               LBNE  OUTERR
+0294 2235 8c 22 4f                  CMPX  #LLEA
+0295 2238 10 26 ff ea               LBNE  TLEA1
+0296 223c 39                        RTS
+0297                         
+0298 223d 00 00              TBLEA  FDB   $0000
+0299 223f 04                        FCB   $04
+0300 2240 00 01                     FDB   $0001
+0301 2242 00                        FCB   $00
+0302 2243 ff ff                     FDB   $FFFF
+0303 2245 00                        FCB   $00
+0304 2246 7f ff                     FDB   $7FFF
+0305 2248 00                        FCB   $00
+0306 2249 80 00                     FDB   $8000
+0307 224b 00                        FCB   $00
+0308 224c 80 01                     FDB   $8001
+0309 224e 00                        FCB   $00
+0310 224f 4c 45 41           LLEA   FCC   'LEA'
+0311 2252 0d 0a 04           	FCB	13,10,EOT
+0312                         
+0313                         **************************************************
+0314                         * Test BIT
+0315                         **************************************************
+0316 2255 ce 22 8f           TBIT   LDU   #LBIT
+0317 2258 8e 22 71                  LDX   #TBBIT
+0318 225b a6 80              TBIT1  LDA   ,X+
+0319 225d a5 80                     BITA  ,X+
+0320 225f 1f a9                     TFR   CC,B
+0321 2261 c4 0e                     ANDB  #$0E   ; Only check Bits NZV
+0322 2263 e1 80                     CMPB  ,X+
+0323 2265 10 26 10 7d               LBNE  OUTERR
+0324 2269 8c 22 8f                  CMPX  #LBIT
+0325 226c 10 26 ff eb               LBNE  TBIT1
+0326 2270 39                        RTS
+0327                         
+0328 2271 00 00 04           TBBIT  FCB   $00,$00,$04
+0329 2274 aa 55 04                  FCB   $AA,$55,$04
+0330 2277 aa aa 08                  FCB   $AA,$AA,$08
+0331 227a 55 55 00                  FCB   $55,$55,$00
+0332 227d ff ff 08                  FCB   $FF,$FF,$08
+0333 2280 ff 80 08                  FCB   $FF,$80,$08
+0334 2283 81 80 08                  FCB   $81,$80,$08
+0335 2286 ff 7f 00                  FCB   $FF,$7F,$00
+0336 2289 ff 01 00                  FCB   $FF,$01,$00
+0337 228c f0 0f 04                  FCB   $F0,$0F,$04
+0338 228f 42 49 54           LBIT   FCC   'BIT'
+0339 2292 0d 0a 04           	FCB	13,10,EOT
+0340                         
+0341                         **************************************************
+0342                         * Test DAA
+0343                         **************************************************
+0344 2295 ce 23 fe           TDAA   LDU   #LDAA
+0345 2298 8e 22 be                  LDX   #TBDAA
+0346 229b a6 80              TDAA1  LDA   ,X+
+0347 229d 1f a9                     TFR   CC,B
+0348 229f e4 80                     ANDB  ,X+
+0349 22a1 ea 80                     ORB   ,X+
+0350 22a3 1f 9a                     TFR   B,CC
+0351 22a5 19                        DAA
+0352 22a6 1f a9                     TFR   CC,B
+0353 22a8 a1 80                     CMPA  ,X+
+0354 22aa 10 26 10 38               LBNE  OUTERR
+0355 22ae c4 0d                     ANDB  #$0D   ; Only check Bits NZC
+0356 22b0 e1 80                     CMPB  ,X+
+0357 22b2 10 26 10 30               LBNE  OUTERR
+0358 22b6 8c 23 fe                  CMPX  #LDAA
+0359 22b9 10 26 ff de               LBNE  TDAA1
+0360 22bd 39                        RTS
+0361                         
+0362                         TBDAA
+0363                         * Carry: 0, Halfcarry: 0
+0364 22be 00 de 00 00 04            FCB   $00,$DE,$00,$00,$04
+0365 22c3 01 de 00 01 00            FCB   $01,$DE,$00,$01,$00
+0366 22c8 09 de 00 09 00            FCB   $09,$DE,$00,$09,$00
+0367 22cd 0a de 00 10 00            FCB   $0A,$DE,$00,$10,$00
+0368 22d2 0f de 00 15 00            FCB   $0F,$DE,$00,$15,$00
+0369 22d7 10 de 00 10 00            FCB   $10,$DE,$00,$10,$00
+0370 22dc 4a de 00 50 00            FCB   $4A,$DE,$00,$50,$00
+0371 22e1 79 de 00 79 00            FCB   $79,$DE,$00,$79,$00
+0372 22e6 7a de 00 80 08            FCB   $7A,$DE,$00,$80,$08
+0373 22eb 7f de 00 85 08            FCB   $7F,$DE,$00,$85,$08
+0374 22f0 81 de 00 81 08            FCB   $81,$DE,$00,$81,$08
+0375 22f5 99 de 00 99 08            FCB   $99,$DE,$00,$99,$08
+0376 22fa a0 de 00 00 05            FCB   $A0,$DE,$00,$00,$05
+0377 22ff bf de 00 25 01            FCB   $BF,$DE,$00,$25,$01
+0378 2304 f0 de 00 50 01            FCB   $F0,$DE,$00,$50,$01
+0379 2309 ff de 00 65 01            FCB   $FF,$DE,$00,$65,$01
+0380                         * Carry: 1, Halfcarry: 0
+0381 230e 00 df 01 60 01            FCB   $00,$DF,$01,$60,$01
+0382 2313 01 df 01 61 01            FCB   $01,$DF,$01,$61,$01
+0383 2318 09 df 01 69 01            FCB   $09,$DF,$01,$69,$01
+0384 231d 0a df 01 70 01            FCB   $0A,$DF,$01,$70,$01
+0385 2322 0f df 01 75 01            FCB   $0F,$DF,$01,$75,$01
+0386 2327 10 df 01 70 01            FCB   $10,$DF,$01,$70,$01
+0387 232c 4a df 01 b0 09            FCB   $4A,$DF,$01,$B0,$09
+0388 2331 79 df 01 d9 09            FCB   $79,$DF,$01,$D9,$09
+0389 2336 7a df 01 e0 09            FCB   $7A,$DF,$01,$E0,$09
+0390 233b 7f df 01 e5 09            FCB   $7F,$DF,$01,$e5,$09
+0391 2340 81 df 01 e1 09            FCB   $81,$DF,$01,$E1,$09
+0392 2345 99 df 01 f9 09            FCB   $99,$DF,$01,$F9,$09
+0393 234a a0 df 01 00 05            FCB   $A0,$DF,$01,$00,$05
+0394 234f bf df 01 25 01            FCB   $BF,$DF,$01,$25,$01
+0395 2354 f0 df 01 50 01            FCB   $F0,$DF,$01,$50,$01
+0396 2359 ff df 01 65 01            FCB   $FF,$DF,$01,$65,$01
+0397                         * Carry: 0, Halfcarry: 1
+0398 235e 00 fe 20 06 00            FCB   $00,$FE,$20,$06,$00
+0399 2363 01 fe 20 07 00            FCB   $01,$FE,$20,$07,$00
+0400 2368 09 fe 20 0f 00            FCB   $09,$FE,$20,$0F,$00
+0401 236d 0a fe 20 10 00            FCB   $0A,$FE,$20,$10,$00
+0402 2372 0f fe 20 15 00            FCB   $0F,$FE,$20,$15,$00
+0403 2377 10 fe 20 16 00            FCB   $10,$FE,$20,$16,$00
+0404 237c 4a fe 20 50 00            FCB   $4A,$FE,$20,$50,$00
+0405 2381 79 fe 20 7f 00            FCB   $79,$FE,$20,$7F,$00
+0406 2386 7a fe 20 80 08            FCB   $7A,$FE,$20,$80,$08
+0407 238b 7f fe 20 85 08            FCB   $7F,$FE,$20,$85,$08
+0408 2390 81 fe 20 87 08            FCB   $81,$FE,$20,$87,$08
+0409 2395 99 fe 20 9f 08            FCB   $99,$FE,$20,$9F,$08
+0410 239a a0 fe 20 06 01            FCB   $A0,$FE,$20,$06,$01
+0411 239f bf fe 20 25 01            FCB   $BF,$FE,$20,$25,$01
+0412 23a4 f0 fe 20 56 01            FCB   $F0,$FE,$20,$56,$01
+0413 23a9 ff fe 20 65 01            FCB   $FF,$FE,$20,$65,$01
+0414                         * Carry: 1, Halfcarry: 1
+0415 23ae 00 ff 21 66 01            FCB   $00,$FF,$21,$66,$01
+0416 23b3 01 ff 21 67 01            FCB   $01,$FF,$21,$67,$01
+0417 23b8 09 ff 21 6f 01            FCB   $09,$FF,$21,$6F,$01
+0418 23bd 0a ff 21 70 01            FCB   $0A,$FF,$21,$70,$01
+0419 23c2 0f ff 21 75 01            FCB   $0F,$FF,$21,$75,$01
+0420 23c7 10 ff 21 76 01            FCB   $10,$FF,$21,$76,$01
+0421 23cc 4a ff 21 b0 09            FCB   $4A,$FF,$21,$B0,$09
+0422 23d1 79 ff 21 df 09            FCB   $79,$FF,$21,$DF,$09
+0423 23d6 7a ff 21 e0 09            FCB   $7A,$FF,$21,$E0,$09
+0424 23db 7f ff 21 e5 09            FCB   $7F,$FF,$21,$E5,$09
+0425 23e0 81 ff 21 e7 09            FCB   $81,$FF,$21,$E7,$09
+0426 23e5 99 ff 21 ff 09            FCB   $99,$FF,$21,$FF,$09
+0427 23ea a0 ff 21 06 01            FCB   $A0,$FF,$21,$06,$01
+0428 23ef bf ff 21 25 01            FCB   $BF,$FF,$21,$25,$01
+0429 23f4 f0 ff 21 56 01            FCB   $F0,$FF,$21,$56,$01
+0430 23f9 ff ff 21 65 01            FCB   $FF,$FF,$21,$65,$01
+0431 23fe 44 41 41           LDAA   FCC   'DAA'
+0432 2401 0d 0a 04           	FCB	13,10,EOT
+0433                         
+0434                         **************************************************
+0435                         * Test NEG
+0436                         **************************************************
+0437 2404 ce 24 3d           TNEG   LDU   #LNEG
+0438 2407 8e 24 25                  LDX   #TBNEG
+0439 240a a6 80              TNEG1  LDA   ,X+
+0440 240c 40                        NEGA
+0441 240d 1f a9                     TFR   CC,B
+0442 240f a1 80                     CMPA  ,X+
+0443 2411 10 26 0e d1               LBNE  OUTERR
+0444 2415 c4 0f                     ANDB  #$0F   ; Only check Bits NZVC
+0445 2417 e1 80                     CMPB  ,X+
+0446 2419 10 26 0e c9               LBNE  OUTERR
+0447 241d 8c 24 3d                  CMPX  #LNEG
+0448 2420 10 26 ff e6               LBNE  TNEG1
+0449 2424 39                        RTS
+0450                         
+0451 2425 00 00 04           TBNEG  FCB   $00,$00,$04
+0452 2428 80 80 0b                  FCB   $80,$80,$0B
+0453 242b 01 ff 09                  FCB   $01,$FF,$09
+0454 242e ff 01 01                  FCB   $FF,$01,$01
+0455 2431 7f 81 09                  FCB   $7F,$81,$09
+0456 2434 81 7f 01                  FCB   $81,$7F,$01
+0457 2437 c0 40 01                  FCB   $C0,$40,$01
+0458 243a 40 c0 09                  FCB   $40,$C0,$09
+0459 243d 4e 45 47           LNEG   FCC   'NEG'
+0460 2440 0d 0a 04           	FCB	13,10,EOT
+0461                         
+0462                         **************************************************
+0463                         * Test COM
+0464                         **************************************************
+0465 2443 ce 24 80           TCOM   LDU   #LCOM
+0466 2446 8e 24 62                  LDX   #TBCOM
+0467 2449 a6 80              TCOM1  LDA   ,X+
+0468 244b 43                        COMA
+0469 244c 1f a9                     TFR   CC,B
+0470 244e a1 80                     CMPA  ,X+
+0471 2450 10 26 0e 92               LBNE  OUTERR
+0472 2454 c4 0f                     ANDB  #$0F   ; Only check Bits NZVC
+0473 2456 e1 80                     CMPB  ,X+
+0474 2458 10 26 0e 8a               LBNE  OUTERR
+0475 245c 8c 24 80                  CMPX  #LCOM
+0476 245f 26 e8                     BNE   TCOM1
+0477 2461 39                        RTS
+0478                         
+0479                         
+0480 2462 00 ff 09           TBCOM  FCB   $00,$FF,$09
+0481 2465 ff 00 05                  FCB   $FF,$00,$05
+0482 2468 f0 0f 01                  FCB   $F0,$0F,$01
+0483 246b 0f f0 09                  FCB   $0F,$F0,$09
+0484 246e 55 aa 09                  FCB   $55,$AA,$09
+0485 2471 aa 55 01                  FCB   $AA,$55,$01
+0486 2474 01 fe 09                  FCB   $01,$FE,$09
+0487 2477 fe 01 01                  FCB   $FE,$01,$01
+0488 247a 80 7f 01                  FCB   $80,$7F,$01
+0489 247d 7f 80 09                  FCB   $7F,$80,$09
+0490 2480 43 4f 4d           LCOM   FCC   'COM'
+0491 2483 0d 0a 04           	FCB	13,10,EOT
+0492                         
+0493                         **************************************************
+0494                         * Test LSR
+0495                         **************************************************
+0496 2486 ce 24 de           TLSR   LDU   #LLSR
+0497 2489 8e 24 a5                  LDX   #TBLSR
+0498 248c a6 80              TLSR1  LDA   ,X+
+0499 248e 44                        LSRA
+0500 248f 1f a9                     TFR   CC,B
+0501 2491 a1 80                     CMPA  ,X+
+0502 2493 10 26 0e 4f               LBNE  OUTERR
+0503 2497 c4 0f                     ANDB  #$0F   ; Only check Bits NZVC
+0504 2499 e1 80                     CMPB  ,X+
+0505 249b 10 26 0e 47               LBNE  OUTERR
+0506 249f 8c 24 de                  CMPX  #LLSR
+0507 24a2 26 e8                     BNE   TLSR1
+0508 24a4 39                        RTS
+0509                         
+0510                         
+0511 24a5 00 00 04           TBLSR  FCB   $00,$00,$04
+0512 24a8 ff 7f 01                  FCB   $FF,$7F,$01
+0513 24ab 7f 3f 01                  FCB   $7F,$3F,$01
+0514 24ae 3f 1f 01                  FCB   $3F,$1F,$01
+0515 24b1 1f 0f 01                  FCB   $1F,$0F,$01
+0516 24b4 0f 07 01                  FCB   $0F,$07,$01
+0517 24b7 07 03 01                  FCB   $07,$03,$01
+0518 24ba 03 01 01                  FCB   $03,$01,$01
+0519 24bd 01 00 05                  FCB   $01,$00,$05
+0520 24c0 55 2a 01                  FCB   $55,$2A,$01
+0521 24c3 aa 55 00                  FCB   $AA,$55,$00
+0522 24c6 80 40 00                  FCB   $80,$40,$00
+0523 24c9 10 08 00                  FCB   $10,$08,$00
+0524 24cc c0 60 00                  FCB   $C0,$60,$00
+0525 24cf e0 70 00                  FCB   $E0,$70,$00
+0526 24d2 f0 78 00                  FCB   $F0,$78,$00
+0527 24d5 f8 7c 00                  FCB   $F8,$7C,$00
+0528 24d8 fc 7e 00                  FCB   $FC,$7E,$00
+0529 24db fe 7f 00                  FCB   $FE,$7F,$00
+0530 24de 4c 53 52           LLSR   FCC   'LSR'
+0531 24e1 0d 0a 04           	FCB	13,10,EOT
+0532                         
+0533                         **************************************************
+0534                         * Test LSL
+0535                         **************************************************
+0536 24e4 ce 25 38           TLSL   LDU   #LLSL
+0537 24e7 8e 24 ff                  LDX   #TBLSL
+0538 24ea a6 80              TLSL1  LDA   ,X+
+0539 24ec 48                        LSLA
+0540 24ed 1f a9                     TFR   CC,B
+0541 24ef a1 80                     CMPA  ,X+
+0542 24f1 10 26 0d f1               LBNE  OUTERR
+0543 24f5 c4 0f                     ANDB  #$0F   ; Only check Bits NZVC
+0544 24f7 e1 80                     CMPB  ,X+
+0545                         *       LBNE  OUTERR
+0546 24f9 8c 25 38                  CMPX  #LLSL
+0547 24fc 26 ec                     BNE   TLSL1
+0548 24fe 39                        RTS
+0549                         
+0550                         
+0551 24ff 00 00 04           TBLSL  FCB   $00,$00,$04
+0552 2502 ff fe 01                  FCB   $FF,$FE,$01
+0553 2505 7f fe 01                  FCB   $7F,$FE,$01
+0554 2508 3f 7e 01                  FCB   $3F,$7E,$01
+0555 250b 1f 3e 00                  FCB   $1F,$3E,$00
+0556 250e 0f 1e 00                  FCB   $0F,$1E,$00
+0557 2511 07 0e 00                  FCB   $07,$0E,$00
+0558 2514 03 06 00                  FCB   $03,$06,$00
+0559 2517 01 02 00                  FCB   $01,$02,$00
+0560 251a 55 aa 00                  FCB   $55,$AA,$00
+0561 251d aa 54 00                  FCB   $AA,$54,$00
+0562 2520 80 00 01                  FCB   $80,$00,$01
+0563 2523 10 20 01                  FCB   $10,$20,$01
+0564 2526 c0 80 01                  FCB   $C0,$80,$01
+0565 2529 e0 c0 01                  FCB   $E0,$C0,$01
+0566 252c f0 e0 01                  FCB   $F0,$E0,$01
+0567 252f f8 f0 01                  FCB   $F8,$F0,$01
+0568 2532 fc f8 01                  FCB   $FC,$F8,$01
+0569 2535 fe fc 01                  FCB   $FE,$FC,$01
+0570 2538 4c 53 4c           LLSL   FCC   'LSL'
+0571 253b 0d 0a 04           	FCB	13,10,EOT
+0572                         
+0573                         **************************************************
+0574                         * Test ASR
+0575                         **************************************************
+0576 253e ce 25 96           TASR   LDU   #LASR
+0577 2541 8e 25 5d                  LDX   #TBASR
+0578 2544 a6 80              TASR1  LDA   ,X+
+0579 2546 47                        ASRA
+0580 2547 1f a9                     TFR   CC,B
+0581 2549 a1 80                     CMPA  ,X+
+0582 254b 10 26 0d 97               LBNE  OUTERR
+0583 254f c4 0d                     ANDB  #$0D   ; Only check Bits NZC
+0584 2551 e1 80                     CMPB  ,X+
+0585 2553 10 26 0d 8f               LBNE  OUTERR
+0586 2557 8c 25 96                  CMPX  #LASR
+0587 255a 26 e8                     BNE   TASR1
+0588 255c 39                        RTS
+0589                         
+0590                         
+0591 255d 00 00 04           TBASR  FCB   $00,$00,$04
+0592 2560 ff ff 09                  FCB   $FF,$FF,$09
+0593 2563 7f 3f 01                  FCB   $7F,$3F,$01
+0594 2566 3f 1f 01                  FCB   $3F,$1F,$01
+0595 2569 1f 0f 01                  FCB   $1F,$0F,$01
+0596 256c 0f 07 01                  FCB   $0F,$07,$01
+0597 256f 07 03 01                  FCB   $07,$03,$01
+0598 2572 03 01 01                  FCB   $03,$01,$01
+0599 2575 01 00 05                  FCB   $01,$00,$05
+0600 2578 55 2a 01                  FCB   $55,$2A,$01
+0601 257b aa d5 08                  FCB   $AA,$D5,$08
+0602 257e 80 c0 08                  FCB   $80,$C0,$08
+0603 2581 10 08 00                  FCB   $10,$08,$00
+0604 2584 c0 e0 08                  FCB   $C0,$E0,$08
+0605 2587 e0 f0 08                  FCB   $E0,$F0,$08
+0606 258a f0 f8 08                  FCB   $F0,$F8,$08
+0607 258d f8 fc 08                  FCB   $F8,$FC,$08
+0608 2590 fc fe 08                  FCB   $FC,$FE,$08
+0609 2593 fe ff 08                  FCB   $FE,$FF,$08
+0610 2596 41 53 52           LASR   FCC   'ASR'
+0611 2599 0d 0a 04           	FCB	13,10,EOT
+0612                         
+0613                         **************************************************
+0614                         * Test ROR
+0615                         **************************************************
+0616 259c ce 26 13           TROR   LDU   #LROR
+0617 259f 8e 25 c3                  LDX   #TBROR
+0618 25a2 a6 80              TROR1  LDA   ,X+
+0619 25a4 1f a9                     TFR   CC,B
+0620 25a6 e4 80                     ANDB  ,X+
+0621 25a8 ea 80                     ORB   ,X+
+0622 25aa 1f 9a                     TFR   B,CC
+0623 25ac 46                        RORA
+0624 25ad 1f a9                     TFR   CC,B
+0625 25af a1 80                     CMPA  ,X+
+0626 25b1 10 26 0d 31               LBNE  OUTERR
+0627 25b5 c4 0d                     ANDB  #$0D   ; Only check Bits NZC
+0628 25b7 e1 80                     CMPB  ,X+
+0629 25b9 10 26 0d 29               LBNE  OUTERR
+0630 25bd 8c 26 13                  CMPX  #LROR
+0631 25c0 26 e0                     BNE   TROR1
+0632 25c2 39                        RTS
+0633                         
+0634 25c3 00 fe 00 00 04     TBROR  FCB   $00,$FE,$00,$00,$04
+0635 25c8 01 fe 00 00 05            FCB   $01,$FE,$00,$00,$05
+0636 25cd 0f fe 00 07 01            FCB   $0F,$FE,$00,$07,$01
+0637 25d2 10 fe 00 08 00            FCB   $10,$FE,$00,$08,$00
+0638 25d7 7f fe 00 3f 01            FCB   $7F,$FE,$00,$3F,$01
+0639 25dc 80 fe 00 40 00            FCB   $80,$FE,$00,$40,$00
+0640 25e1 fe fe 00 7f 00            FCB   $FE,$FE,$00,$7F,$00
+0641 25e6 ff fe 00 7f 01            FCB   $FF,$FE,$00,$7F,$01
+0642 25eb 00 ff 01 80 08            FCB   $00,$FF,$01,$80,$08
+0643 25f0 01 ff 01 80 09            FCB   $01,$FF,$01,$80,$09
+0644 25f5 0f ff 01 87 09            FCB   $0F,$FF,$01,$87,$09
+0645 25fa 10 ff 01 88 08            FCB   $10,$FF,$01,$88,$08
+0646 25ff 7f ff 01 bf 09            FCB   $7F,$FF,$01,$BF,$09
+0647 2604 80 ff 01 c0 08            FCB   $80,$FF,$01,$C0,$08
+0648 2609 fe ff 01 ff 08            FCB   $FE,$FF,$01,$FF,$08
+0649 260e ff ff 01 ff 09            FCB   $FF,$FF,$01,$FF,$09
+0650 2613 52 4f 52           LROR   FCC   'ROR'
+0651 2616 0d 0a 04           	FCB	13,10,EOT
+0652                         
+0653                         **************************************************
+0654                         * Test ROL
+0655                         **************************************************
+0656 2619 ce 26 8c           TROL   LDU   #LROL
+0657 261c 8e 26 3c                  LDX   #TBROL
+0658 261f a6 80              TROL1  LDA   ,X+
+0659 2621 1f a9                     TFR   CC,B
+0660 2623 e4 80                     ANDB  ,X+
+0661 2625 ea 80                     ORB   ,X+
+0662 2627 1f 9a                     TFR   B,CC
+0663 2629 49                        ROLA
+0664 262a 1f a9                     TFR   CC,B
+0665 262c a1 80                     CMPA  ,X+
+0666 262e 10 26 0c b4               LBNE  OUTERR
+0667 2632 c4 0d                     ANDB  #$0D   ; Only check Bits NZC
+0668 2634 e1 80                     CMPB  ,X+
+0669                         *       LBNE  OUTERR
+0670 2636 8c 26 8c                  CMPX  #LROL
+0671 2639 26 e4                     BNE   TROL1
+0672 263b 39                        RTS
+0673                         
+0674 263c 00 fe 00 00 04     TBROL  FCB   $00,$FE,$00,$00,$04
+0675 2641 01 fe 00 02 00            FCB   $01,$FE,$00,$02,$00
+0676 2646 0f fe 00 1e 00            FCB   $0F,$FE,$00,$1E,$00
+0677 264b 08 fe 00 10 00            FCB   $08,$FE,$00,$10,$00
+0678 2650 7f fe 00 fe 08            FCB   $7F,$FE,$00,$FE,$08
+0679 2655 80 fe 00 00 05            FCB   $80,$FE,$00,$00,$05
+0680 265a fe fe 00 fc 09            FCB   $FE,$FE,$00,$FC,$09
+0681 265f ff fe 00 fe 09            FCB   $FF,$FE,$00,$FE,$09
+0682 2664 00 ff 01 01 00            FCB   $00,$FF,$01,$01,$00
+0683 2669 01 ff 01 03 00            FCB   $01,$FF,$01,$03,$00
+0684 266e 0f ff 01 1f 00            FCB   $0F,$FF,$01,$1F,$00
+0685 2673 08 ff 01 11 00            FCB   $08,$FF,$01,$11,$00
+0686 2678 7f ff 01 ff 08            FCB   $7F,$FF,$01,$FF,$08
+0687 267d 80 ff 01 01 01            FCB   $80,$FF,$01,$01,$01
+0688 2682 fe ff 01 fd 09            FCB   $FE,$FF,$01,$FD,$09
+0689 2687 ff ff 01 ff 09            FCB   $FF,$FF,$01,$FF,$09
+0690 268c 52 4f 4c           LROL   FCC   'ROL'
+0691 268f 0d 0a 04           	FCB	13,10,EOT
+0692                         
+0693                         **************************************************
+0694                         * Test DEC
+0695                         **************************************************
+0696 2692 ce 26 c6           TDEC   LDU   #LDEC
+0697 2695 8e 26 b1                  LDX   #TBDEC
+0698 2698 a6 80              TDEC1  LDA   ,X+
+0699 269a 4a                        DECA
+0700 269b 1f a9                     TFR   CC,B
+0701 269d a1 80                     CMPA  ,X+
+0702 269f 10 26 0c 43               LBNE  OUTERR
+0703 26a3 c4 0e                     ANDB  #$0E   ; Only check Bits NZV
+0704 26a5 e1 80                     CMPB  ,X+
+0705 26a7 10 26 0c 3b               LBNE  OUTERR
+0706 26ab 8c 26 c6                  CMPX  #LDEC
+0707 26ae 26 e8                     BNE   TDEC1
+0708 26b0 39                        RTS
+0709                         
+0710 26b1 01 00 04           TBDEC  FCB   $01,$00,$04
+0711 26b4 00 ff 08                  FCB   $00,$FF,$08
+0712 26b7 ff fe 08                  FCB   $FF,$FE,$08
+0713 26ba 80 7f 02                  FCB   $80,$7F,$02
+0714 26bd 7f 7e 00                  FCB   $7F,$7E,$00
+0715 26c0 10 0f 00                  FCB   $10,$0F,$00
+0716 26c3 0f 0e 00                  FCB   $0F,$0E,$00
+0717 26c6 44 45 43           LDEC   FCC   'DEC'
+0718 26c9 0d 0a 04           	FCB	13,10,EOT
+0719                         
+0720                         **************************************************
+0721                         * Test INC
+0722                         **************************************************
+0723 26cc ce 27 00           TINC   LDU   #LINC
+0724 26cf 8e 26 eb                  LDX   #TBINC
+0725 26d2 a6 80              TINC1  LDA   ,X+
+0726 26d4 4c                        INCA
+0727 26d5 1f a9                     TFR   CC,B
+0728 26d7 a1 80                     CMPA  ,X+
+0729 26d9 10 26 0c 09               LBNE  OUTERR
+0730 26dd c4 0e                     ANDB  #$0E   ; Only check Bits NZV
+0731 26df e1 80                     CMPB  ,X+
+0732 26e1 10 26 0c 01               LBNE  OUTERR
+0733 26e5 8c 27 00                  CMPX  #LINC
+0734 26e8 26 e8                     BNE   TINC1
+0735 26ea 39                        RTS
+0736                         
+0737 26eb 00 01 00           TBINC  FCB   $00,$01,$00
+0738 26ee fe ff 08                  FCB   $FE,$FF,$08
+0739 26f1 ff 00 04                  FCB   $FF,$00,$04
+0740 26f4 7f 80 0a                  FCB   $7F,$80,$0A
+0741 26f7 80 81 08                  FCB   $80,$81,$08
+0742 26fa 0f 10 00                  FCB   $0F,$10,$00
+0743 26fd 10 11 00                  FCB   $10,$11,$00
+0744 2700 49 4e 43           LINC   FCC   'INC'
+0745 2703 0d 0a 04           	FCB	13,10,EOT
+0746                         
+0747                         **************************************************
+0748                         * Test CLR
+0749                         **************************************************
+0750 2706 ce 27 36           TCLR   LDU   #LCLR
+0751 2709 8e 27 21                  LDX   #TBCLR
+0752 270c a6 80              TCLR1  LDA   ,X+
+0753 270e 4f                        CLRA
+0754 270f 1f a9                     TFR   CC,B
+0755 2711 a1 80                     CMPA  ,X+
+0756 2713 10 26 0b cf               LBNE  OUTERR
+0757 2717 c4 0f                     ANDB  #$0F   ; Only check Bits NZVC
+0758 2719 e1 80                     CMPB  ,X+
+0759                         *       LBNE  OUTERR
+0760 271b 8c 27 36                  CMPX  #LCLR
+0761 271e 26 ec                     BNE   TCLR1
+0762 2720 39                        RTS
+0763                         
+0764 2721 01 00 04           TBCLR  FCB   $01,$00,$04
+0765 2724 00 00 04                  FCB   $00,$00,$04
+0766 2727 ff 00 04                  FCB   $FF,$00,$04
+0767 272a 80 00 04                  FCB   $80,$00,$04
+0768 272d 7f 00 04                  FCB   $7F,$00,$04
+0769 2730 10 00 04                  FCB   $10,$00,$04
+0770 2733 0f 00 04                  FCB   $0F,$00,$04
+0771 2736 43 4c 52           LCLR   FCC   'CLR'
+0772 2739 0d 0a 04           	FCB	13,10,EOT
+0773                         
+0774                         **************************************************
+0775                         * Test ADDD
+0776                         **************************************************
+0777 273c ce 27 c1           TADDD  LDU   #LADDD
+0778 273f 8e 27 5f                  LDX   #TBADDD
+0779 2742 ec 81              TADDD1 LDD   ,X++
+0780 2744 e3 81                     ADDD  ,X++
+0781 2746 1f ab                     TFR   CC,DP
+0782 2748 10 a3 81                  CMPD  ,X++
+0783 274b 10 26 0b 97               LBNE  OUTERR
+0784 274f 1f b8                     TFR   DP,A
+0785 2751 84 0f                     ANDA  #$0F   ; Only check Bits NZVC
+0786 2753 a1 80                     CMPA  ,X+
+0787 2755 10 26 0b 8d               LBNE  OUTERR
+0788 2759 8c 27 c1                  CMPX  #LADDD
+0789 275c 26 e4                     BNE   TADDD1
+0790 275e 39                        RTS
+0791                         
+0792 275f 00 00 00 00 00 00  TBADDD FDB   $0000,$0000,$0000
+0793 2765 04                        FCB   $04
+0794 2766 00 00 00 01 00 01         FDB   $0000,$0001,$0001
+0795 276c 00                        FCB   $00
+0796 276d 40 00 40 00 80 00         FDB   $4000,$4000,$8000
+0797 2773 0a                        FCB   $0A
+0798 2774 00 00 80 00 80 00         FDB   $0000,$8000,$8000
+0799 277a 08                        FCB   $08
+0800 277b 80 00 80 00 00 00         FDB   $8000,$8000,$0000
+0801 2781 07                        FCB   $07
+0802 2782 40 00 80 00 c0 00         FDB   $4000,$8000,$C000
+0803 2788 08                        FCB   $08
+0804 2789 7f ff 7f ff ff fe         FDB   $7FFF,$7FFF,$FFFE
+0805 278f 0a                        FCB   $0A
+0806 2790 7f ff 80 00 ff ff         FDB   $7FFF,$8000,$FFFF
+0807 2796 08                        FCB   $08
+0808 2797 7f ff 00 01 80 00         FDB   $7FFF,$0001,$8000
+0809 279d 0a                        FCB   $0A
+0810 279e 80 00 00 01 80 01         FDB   $8000,$0001,$8001
+0811 27a4 08                        FCB   $08
+0812 27a5 40 00 c0 00 00 00         FDB   $4000,$C000,$0000
+0813 27ab 05                        FCB   $05
+0814 27ac 40 00 c0 01 00 01         FDB   $4000,$C001,$0001
+0815 27b2 01                        FCB   $01
+0816 27b3 ff ff ff ff ff fe         FDB   $FFFF,$FFFF,$FFFE
+0817 27b9 09                        FCB   $09
+0818 27ba 80 01 80 00 00 01         FDB   $8001,$8000,$0001
+0819 27c0 03                        FCB   $03
+0820 27c1 41 44 44 44        LADDD  FCC   'ADDD'
+0821 27c5 0d 0a 04           	FCB	13,10,EOT
+0822                         
+0823                         **************************************************
+0824                         * Test ADD
+0825                         **************************************************
+0826 27c8 ce 28 24           TADD   LDU   #LADD
+0827 27cb 8e 27 e8                  LDX   #TBADD
+0828 27ce e6 80              TADD1  LDB   ,X+
+0829 27d0 eb 80                     ADDB  ,X+
+0830 27d2 1f a8                     TFR   CC,A
+0831 27d4 e1 80                     CMPB  ,X+
+0832 27d6 10 26 0b 0c               LBNE  OUTERR
+0833 27da 84 2f                     ANDA  #$2F   ; Only check Bits HNZVC
+0834 27dc a1 80                     CMPA  ,X+
+0835 27de 10 26 0b 04               LBNE  OUTERR
+0836 27e2 8c 28 24                  CMPX  #LADD
+0837 27e5 26 e7                     BNE   TADD1
+0838 27e7 39                        RTS
+0839                         
+0840 27e8 00 00 00 04        TBADD  FCB   $00,$00,$00,$04
+0841 27ec 00 01 01 00               FCB   $00,$01,$01,$00
+0842 27f0 40 40 80 0a               FCB   $40,$40,$80,$0A
+0843 27f4 00 80 80 08               FCB   $00,$80,$80,$08
+0844 27f8 80 80 00 07               FCB   $80,$80,$00,$07
+0845 27fc 40 80 c0 08               FCB   $40,$80,$C0,$08
+0846 2800 7f 7f fe 2a               FCB   $7F,$7F,$FE,$2A
+0847 2804 7f 80 ff 08               FCB   $7F,$80,$FF,$08
+0848 2808 80 7f ff 08               FCB   $80,$7F,$FF,$08
+0849 280c 7f 01 80 2a               FCB   $7F,$01,$80,$2A
+0850 2810 80 01 81 08               FCB   $80,$01,$81,$08
+0851 2814 40 c0 00 05               FCB   $40,$C0,$00,$05
+0852 2818 40 c1 01 01               FCB   $40,$C1,$01,$01
+0853 281c ff ff fe 29               FCB   $FF,$FF,$FE,$29
+0854 2820 81 80 01 03               FCB   $81,$80,$01,$03
+0855 2824 41 44 44           LADD   FCC   'ADD'
+0856 2827 0d 0a 04           	FCB	13,10,EOT
+0857                         
+0858                         **************************************************
+0859                         * Test ADC
+0860                         **************************************************
+0861 282a ce 29 06           TADC   LDU   #LADC
+0862 282d 8e 28 52                  LDX   #TBADC
+0863 2830 a6 80              TADC1  LDA   ,X+
+0864 2832 1f a9                     TFR   CC,B
+0865 2834 e4 80                     ANDB  ,X+
+0866 2836 ea 80                     ORB   ,X+
+0867 2838 1f 9a                     TFR   B,CC
+0868 283a a9 80                     ADCA  ,X+
+0869 283c 1f a9                     TFR   CC,B
+0870 283e a1 80                     CMPA  ,X+
+0871 2840 10 26 0a a2               LBNE  OUTERR
+0872 2844 c4 2f                     ANDB  #$2F   ; Only check Bits HNZVC
+0873 2846 e1 80                     CMPB  ,X+
+0874 2848 10 26 0a 9a               LBNE  OUTERR
+0875 284c 8c 29 06                  CMPX  #LADC
+0876 284f 26 df                     BNE   TADC1
+0877 2851 39                        RTS
+0878                         
+0879 2852 00 fe 00 00 00 04  TBADC  FCB   $00,$FE,$00,$00,$00,$04
+0880 2858 00 fe 00 01 01 00         FCB   $00,$FE,$00,$01,$01,$00
+0881 285e 40 fe 00 40 80 0a         FCB   $40,$FE,$00,$40,$80,$0A
+0882 2864 00 fe 00 80 80 08         FCB   $00,$FE,$00,$80,$80,$08
+0883 286a 80 fe 00 80 00 07         FCB   $80,$FE,$00,$80,$00,$07
+0884 2870 40 fe 00 80 c0 08         FCB   $40,$FE,$00,$80,$C0,$08
+0885 2876 7f fe 00 7f fe 2a         FCB   $7F,$FE,$00,$7F,$FE,$2A
+0886 287c 7f fe 00 80 ff 08         FCB   $7F,$FE,$00,$80,$FF,$08
+0887 2882 80 fe 00 7f ff 08         FCB   $80,$FE,$00,$7F,$FF,$08
+0888 2888 7f fe 00 01 80 2a         FCB   $7F,$FE,$00,$01,$80,$2A
+0889 288e 80 fe 00 01 81 08         FCB   $80,$FE,$00,$01,$81,$08
+0890 2894 40 fe 00 c0 00 05         FCB   $40,$FE,$00,$C0,$00,$05
+0891 289a 40 fe 00 c1 01 01         FCB   $40,$FE,$00,$C1,$01,$01
+0892 28a0 ff fe 00 ff fe 29         FCB   $FF,$FE,$00,$FF,$FE,$29
+0893 28a6 81 fe 00 80 01 03         FCB   $81,$FE,$00,$80,$01,$03
+0894 28ac 00 ff 01 00 01 00         FCB   $00,$FF,$01,$00,$01,$00
+0895 28b2 00 ff 01 01 02 00         FCB   $00,$FF,$01,$01,$02,$00
+0896 28b8 40 ff 01 40 81 0a         FCB   $40,$FF,$01,$40,$81,$0A
+0897 28be 00 ff 01 80 81 08         FCB   $00,$FF,$01,$80,$81,$08
+0898 28c4 80 ff 01 80 01 03         FCB   $80,$FF,$01,$80,$01,$03
+0899 28ca 40 ff 01 80 c1 08         FCB   $40,$FF,$01,$80,$C1,$08
+0900 28d0 7f ff 01 7f ff 2a         FCB   $7F,$FF,$01,$7F,$FF,$2A
+0901 28d6 7f ff 01 80 00 25         FCB   $7F,$FF,$01,$80,$00,$25
+0902 28dc 80 ff 01 7f 00 25         FCB   $80,$FF,$01,$7F,$00,$25
+0903 28e2 7f ff 01 01 81 2a         FCB   $7F,$FF,$01,$01,$81,$2A
+0904 28e8 80 ff 01 01 82 08         FCB   $80,$FF,$01,$01,$82,$08
+0905 28ee 40 ff 01 c0 01 01         FCB   $40,$FF,$01,$C0,$01,$01
+0906 28f4 40 ff 01 c1 02 01         FCB   $40,$FF,$01,$C1,$02,$01
+0907 28fa ff ff 01 ff ff 29         FCB   $FF,$FF,$01,$FF,$FF,$29
+0908 2900 81 ff 01 80 02 03         FCB   $81,$FF,$01,$80,$02,$03
+0909 2906 41 44 43           LADC   FCC   'ADC'
+0910 2909 0d 0a 04           	FCB	13,10,EOT
+0911                         
+0912                         **************************************************
+0913                         * Test CMP
+0914                         **************************************************
+0915 290c ce 29 28           TCMP   LDU   #LCMP
+0916 290f 8e 29 4e                  LDX   #TBSUB
+0917 2912 e6 80              TCMP1  LDB   ,X+
+0918 2914 e1 80                     CMPB  ,X+
+0919 2916 1f a8                     TFR   CC,A
+0920 2918 30 01                     LEAX  1,X    ; Skip result Byte
+0921 291a 84 0f                     ANDA  #$0F   ; Only check Bits NZVC
+0922 291c a1 80                     CMPA  ,X+
+0923 291e 10 26 09 c4               LBNE  OUTERR
+0924 2922 8c 29 b6                  CMPX  #LSUB
+0925 2925 26 eb                     BNE   TCMP1
+0926 2927 39                        RTS
+0927                         
+0928 2928 43 4d 50           LCMP   FCC   'CMP'
+0929 292b 0d 0a 04           	FCB	13,10,EOT
+0930                         
+0931                         **************************************************
+0932                         * Test SUB
+0933                         **************************************************
+0934 292e ce 29 b6           TSUB   LDU   #LSUB
+0935 2931 8e 29 4e                  LDX   #TBSUB
+0936 2934 e6 80              TSUB1  LDB   ,X+
+0937 2936 e0 80                     SUBB  ,X+
+0938 2938 1f a8                     TFR   CC,A
+0939 293a e1 80                     CMPB  ,X+
+0940 293c 10 26 09 a6               LBNE  OUTERR
+0941 2940 84 0f                     ANDA  #$0F   ; Only check Bits NZVC
+0942 2942 a1 80                     CMPA  ,X+
+0943 2944 10 26 09 9e               LBNE  OUTERR
+0944 2948 8c 29 b6                  CMPX  #LSUB
+0945 294b 26 e7                     BNE   TSUB1
+0946 294d 39                        RTS
+0947                         
+0948 294e 00 00 00 04        TBSUB  FCB   $00,$00,$00,$04
+0949 2952 00 01 ff 09               FCB   $00,$01,$FF,$09
+0950 2956 00 7f 81 09               FCB   $00,$7F,$81,$09
+0951 295a 00 80 80 0b               FCB   $00,$80,$80,$0B
+0952 295e 00 ff 01 01               FCB   $00,$FF,$01,$01
+0953 2962 01 00 01 00               FCB   $01,$00,$01,$00
+0954 2966 01 7f 82 09               FCB   $01,$7F,$82,$09
+0955 296a 40 41 ff 09               FCB   $40,$41,$FF,$09
+0956 296e 40 80 c0 0b               FCB   $40,$80,$C0,$0B
+0957 2972 40 c0 80 0b               FCB   $40,$C0,$80,$0B
+0958 2976 40 c1 7f 01               FCB   $40,$C1,$7F,$01
+0959 297a 7f 00 7f 00               FCB   $7F,$00,$7F,$00
+0960 297e 7f 01 7e 00               FCB   $7F,$01,$7E,$00
+0961 2982 7f 7e 01 00               FCB   $7F,$7E,$01,$00
+0962 2986 7f 7f 00 04               FCB   $7F,$7F,$00,$04
+0963 298a 7f 80 ff 0b               FCB   $7F,$80,$FF,$0B
+0964 298e 7f ff 80 0b               FCB   $7F,$FF,$80,$0B
+0965 2992 80 01 7f 02               FCB   $80,$01,$7F,$02
+0966 2996 80 40 40 02               FCB   $80,$40,$40,$02
+0967 299a 80 7f 01 02               FCB   $80,$7F,$01,$02
+0968 299e 80 80 00 04               FCB   $80,$80,$00,$04
+0969 29a2 80 81 ff 09               FCB   $80,$81,$FF,$09
+0970 29a6 81 80 01 00               FCB   $81,$80,$01,$00
+0971 29aa ff ff 00 04               FCB   $FF,$FF,$00,$04
+0972 29ae ff fe 01 00               FCB   $FF,$FE,$01,$00
+0973 29b2 ff 00 ff 08               FCB   $FF,$00,$FF,$08
+0974 29b6 53 55 42           LSUB   FCC   'SUB'
+0975 29b9 0d 0a 04           	FCB	13,10,EOT
+0976                         
+0977                         **************************************************
+0978                         * Test SBC
+0979                         **************************************************
+0980 29bc ce 2b 1c           TSBC   LDU   #LSBC
+0981 29bf 8e 29 e4                  LDX   #TBSBC
+0982 29c2 a6 80              TSBC1  LDA   ,X+
+0983 29c4 1f a9                     TFR   CC,B
+0984 29c6 e4 80                     ANDB  ,X+
+0985 29c8 ea 80                     ORB   ,X+
+0986 29ca 1f 9a                     TFR   B,CC
+0987 29cc a2 80                     SBCA  ,X+
+0988 29ce 1f a9                     TFR   CC,B
+0989 29d0 a1 80                     CMPA  ,X+
+0990 29d2 10 26 09 10               LBNE  OUTERR
+0991 29d6 c4 0f                     ANDB  #$0F   ; Only check Bits NZVC
+0992 29d8 e1 80                     CMPB  ,X+
+0993 29da 10 26 09 08               LBNE  OUTERR
+0994 29de 8c 2b 1c                  CMPX  #LSBC
+0995 29e1 26 df                     BNE   TSBC1
+0996 29e3 39                        RTS
+0997                         
+0998 29e4 00 fe 00 00 00 04  TBSBC  FCB   $00,$FE,$00,$00,$00,$04
+0999 29ea 00 fe 00 01 ff 09         FCB   $00,$FE,$00,$01,$FF,$09
+1000 29f0 00 fe 00 7f 81 09         FCB   $00,$FE,$00,$7F,$81,$09
+1001 29f6 00 fe 00 80 80 0b         FCB   $00,$FE,$00,$80,$80,$0B
+1002 29fc 00 fe 00 ff 01 01         FCB   $00,$FE,$00,$FF,$01,$01
+1003 2a02 01 fe 00 00 01 00         FCB   $01,$FE,$00,$00,$01,$00
+1004 2a08 01 fe 00 7f 82 09         FCB   $01,$FE,$00,$7F,$82,$09
+1005 2a0e 40 fe 00 41 ff 09         FCB   $40,$FE,$00,$41,$FF,$09
+1006 2a14 40 fe 00 80 c0 0b         FCB   $40,$FE,$00,$80,$C0,$0B
+1007 2a1a 40 fe 00 c0 80 0b         FCB   $40,$FE,$00,$C0,$80,$0B
+1008 2a20 40 fe 00 c1 7f 01         FCB   $40,$FE,$00,$C1,$7F,$01
+1009 2a26 7f fe 00 00 7f 00         FCB   $7F,$FE,$00,$00,$7F,$00
+1010 2a2c 7f fe 00 01 7e 00         FCB   $7F,$FE,$00,$01,$7E,$00
+1011 2a32 7f fe 00 7e 01 00         FCB   $7F,$FE,$00,$7E,$01,$00
+1012 2a38 7f fe 00 7f 00 04         FCB   $7F,$FE,$00,$7F,$00,$04
+1013 2a3e 7f fe 00 80 ff 0b         FCB   $7F,$FE,$00,$80,$FF,$0B
+1014 2a44 7f fe 00 ff 80 0b         FCB   $7F,$FE,$00,$FF,$80,$0B
+1015 2a4a 80 fe 00 01 7f 02         FCB   $80,$FE,$00,$01,$7F,$02
+1016 2a50 80 fe 00 40 40 02         FCB   $80,$FE,$00,$40,$40,$02
+1017 2a56 80 fe 00 7f 01 02         FCB   $80,$FE,$00,$7F,$01,$02
+1018 2a5c 80 fe 00 80 00 04         FCB   $80,$FE,$00,$80,$00,$04
+1019 2a62 80 fe 00 81 ff 09         FCB   $80,$FE,$00,$81,$FF,$09
+1020 2a68 81 fe 00 80 01 00         FCB   $81,$FE,$00,$80,$01,$00
+1021 2a6e ff fe 00 ff 00 04         FCB   $FF,$FE,$00,$FF,$00,$04
+1022 2a74 ff fe 00 fe 01 00         FCB   $FF,$FE,$00,$FE,$01,$00
+1023 2a7a ff fe 00 00 ff 08         FCB   $FF,$FE,$00,$00,$FF,$08
+1024 2a80 00 ff 01 00 ff 09         FCB   $00,$FF,$01,$00,$FF,$09
+1025 2a86 00 ff 01 01 fe 09         FCB   $00,$FF,$01,$01,$FE,$09
+1026 2a8c 00 ff 01 7f 80 09         FCB   $00,$FF,$01,$7F,$80,$09
+1027 2a92 00 ff 01 80 7f 01         FCB   $00,$FF,$01,$80,$7F,$01
+1028 2a98 00 ff 01 ff 00 05         FCB   $00,$FF,$01,$FF,$00,$05
+1029 2a9e 01 ff 01 00 00 04         FCB   $01,$FF,$01,$00,$00,$04
+1030 2aa4 01 ff 01 7f 81 09         FCB   $01,$FF,$01,$7F,$81,$09
+1031 2aaa 40 ff 01 41 fe 09         FCB   $40,$FF,$01,$41,$FE,$09
+1032 2ab0 40 ff 01 80 bf 0b         FCB   $40,$FF,$01,$80,$BF,$0B
+1033 2ab6 40 ff 01 c0 7f 01         FCB   $40,$FF,$01,$C0,$7F,$01
+1034 2abc 40 ff 01 c1 7e 01         FCB   $40,$FF,$01,$C1,$7E,$01
+1035 2ac2 7f ff 01 00 7e 00         FCB   $7F,$FF,$01,$00,$7E,$00
+1036 2ac8 7f ff 01 01 7d 00         FCB   $7F,$FF,$01,$01,$7D,$00
+1037 2ace 7f ff 01 7e 00 04         FCB   $7F,$FF,$01,$7E,$00,$04
+1038 2ad4 7f ff 01 7f ff 09         FCB   $7F,$FF,$01,$7F,$FF,$09
+1039 2ada 7f ff 01 80 fe 0b         FCB   $7F,$FF,$01,$80,$FE,$0B
+1040 2ae0 7f ff 01 ff 7f 01         FCB   $7F,$FF,$01,$FF,$7F,$01
+1041 2ae6 80 ff 01 01 7e 02         FCB   $80,$FF,$01,$01,$7E,$02
+1042 2aec 80 ff 01 40 3f 02         FCB   $80,$FF,$01,$40,$3F,$02
+1043 2af2 80 ff 01 7f 00 06         FCB   $80,$FF,$01,$7F,$00,$06
+1044 2af8 80 ff 01 80 ff 09         FCB   $80,$FF,$01,$80,$FF,$09
+1045 2afe 80 ff 01 81 fe 09         FCB   $80,$FF,$01,$81,$FE,$09
+1046 2b04 81 ff 01 80 00 04         FCB   $81,$FF,$01,$80,$00,$04
+1047 2b0a ff ff 01 ff ff 09         FCB   $FF,$FF,$01,$FF,$FF,$09
+1048 2b10 ff ff 01 fe 00 04         FCB   $FF,$FF,$01,$FE,$00,$04
+1049 2b16 ff ff 01 00 fe 08         FCB   $FF,$FF,$01,$00,$FE,$08
+1050 2b1c 53 42 43           LSBC   FCC   'SBC'
+1051 2b1f 0d 0a 04           	FCB	13,10,EOT
+1052                         
+1053                         **************************************************
+1054                         * Test SUBD
+1055                         **************************************************
+1056 2b22 ce 2b fb           TSUBD  LDU   #LSUBD
+1057 2b25 8e 2b 45                  LDX   #TBSUBD
+1058 2b28 ec 81              TSUBD1 LDD   ,X++
+1059 2b2a a3 81                     SUBD  ,X++
+1060 2b2c 1f ab                     TFR   CC,DP
+1061 2b2e 10 a3 81                  CMPD  ,X++
+1062 2b31 10 26 07 b1               LBNE  OUTERR
+1063 2b35 1f b8                     TFR   DP,A
+1064 2b37 84 0f                     ANDA  #$0F   ; Only check Bits NZVC
+1065 2b39 a1 80                     CMPA  ,X+
+1066 2b3b 10 26 07 a7               LBNE  OUTERR
+1067 2b3f 8c 2b fb                  CMPX  #LSUBD
+1068 2b42 26 e4                     BNE   TSUBD1
+1069 2b44 39                        RTS
+1070                         
+1071 2b45 00 00 00 00 00 00  TBSUBD FDB   $0000,$0000,$0000
+1072 2b4b 04                        FCB   $04
+1073 2b4c 00 00 00 01 ff ff         FDB   $0000,$0001,$FFFF
+1074 2b52 09                        FCB   $09
+1075 2b53 00 00 7f ff 80 01         FDB   $0000,$7FFF,$8001
+1076 2b59 09                        FCB   $09
+1077 2b5a 00 00 80 00 80 00         FDB   $0000,$8000,$8000
+1078 2b60 0b                        FCB   $0B
+1079 2b61 00 00 ff ff 00 01         FDB   $0000,$FFFF,$0001
+1080 2b67 01                        FCB   $01
+1081 2b68 00 01 00 00 00 01         FDB   $0001,$0000,$0001
+1082 2b6e 00                        FCB   $00
+1083 2b6f 00 01 7f ff 80 02         FDB   $0001,$7FFF,$8002
+1084 2b75 09                        FCB   $09
+1085 2b76 40 00 40 01 ff ff         FDB   $4000,$4001,$FFFF
+1086 2b7c 09                        FCB   $09
+1087 2b7d 40 00 80 00 c0 00         FDB   $4000,$8000,$C000
+1088 2b83 0b                        FCB   $0B
+1089 2b84 40 00 c0 00 80 00         FDB   $4000,$C000,$8000
+1090 2b8a 0b                        FCB   $0B
+1091 2b8b 40 00 c0 01 7f ff         FDB   $4000,$C001,$7FFF
+1092 2b91 01                        FCB   $01
+1093 2b92 7f ff 00 00 7f ff         FDB   $7FFF,$0000,$7FFF
+1094 2b98 00                        FCB   $00
+1095 2b99 7f ff 00 01 7f fe         FDB   $7FFF,$0001,$7FFE
+1096 2b9f 00                        FCB   $00
+1097 2ba0 7f ff 7f fe 00 01         FDB   $7FFF,$7FFE,$0001
+1098 2ba6 00                        FCB   $00
+1099 2ba7 7f ff 7f ff 00 00         FDB   $7FFF,$7FFF,$0000
+1100 2bad 04                        FCB   $04
+1101 2bae 7f ff 80 00 ff ff         FDB   $7FFF,$8000,$FFFF
+1102 2bb4 0b                        FCB   $0B
+1103 2bb5 7f ff ff ff 80 00         FDB   $7FFF,$FFFF,$8000
+1104 2bbb 0b                        FCB   $0B
+1105 2bbc 80 00 00 01 7f ff         FDB   $8000,$0001,$7FFF
+1106 2bc2 02                        FCB   $02
+1107 2bc3 80 00 40 00 40 00         FDB   $8000,$4000,$4000
+1108 2bc9 02                        FCB   $02
+1109 2bca 80 00 7f ff 00 01         FDB   $8000,$7FFF,$0001
+1110 2bd0 02                        FCB   $02
+1111 2bd1 80 00 80 00 00 00         FDB   $8000,$8000,$0000
+1112 2bd7 04                        FCB   $04
+1113 2bd8 80 00 80 01 ff ff         FDB   $8000,$8001,$FFFF
+1114 2bde 09                        FCB   $09
+1115 2bdf 80 01 80 00 00 01         FDB   $8001,$8000,$0001
+1116 2be5 00                        FCB   $00
+1117 2be6 ff ff ff ff 00 00         FDB   $FFFF,$FFFF,$0000
+1118 2bec 04                        FCB   $04
+1119 2bed ff ff ff fe 00 01         FDB   $FFFF,$FFFE,$0001
+1120 2bf3 00                        FCB   $00
+1121 2bf4 ff ff 00 00 ff ff         FDB   $FFFF,$0000,$FFFF
+1122 2bfa 08                        FCB   $08
+1123 2bfb 53 55 42 44        LSUBD  FCC   'SUBD'
+1124 2bff 0d 0a 04           	FCB	13,10,EOT
+1125                         
+1126                         **************************************************
+1127                         * Test CMPD
+1128                         **************************************************
+1129 2c02 ce 2c 20           TCMPD  LDU   #LCMPD
+1130 2c05 8e 2b 45                  LDX   #TBSUBD
+1131 2c08 ec 81              TCMPD1 LDD   ,X++
+1132 2c0a a3 81                     SUBD  ,X++
+1133 2c0c 1f ab                     TFR   CC,DP
+1134 2c0e 30 02                     LEAX  2,X    ; Skip result Word
+1135 2c10 1f b8                     TFR   DP,A
+1136 2c12 84 0f                     ANDA  #$0F   ; Only check Bits NZVC
+1137 2c14 a1 80                     CMPA  ,X+
+1138 2c16 10 26 06 cc               LBNE  OUTERR
+1139 2c1a 8c 2b fb                  CMPX  #LSUBD
+1140 2c1d 26 e9                     BNE   TCMPD1
+1141 2c1f 39                        RTS
+1142                         
+1143 2c20 43 4d 50 44        LCMPD  FCC   'CMPD'
+1144 2c24 0d 0a 04           	FCB	13,10,EOT
+1145                         
+1146                         **************************************************
+1147                         * Test TFR
+1148                         **************************************************
+1149 2c27 8e 2c b9           TTFR   LDX   #TBTFR
+1150 2c2a 34 10              TTFR1  PSHS  X
+1151 2c2c 10 ae 84                  LDY   ,X
+1152 2c2f ad a4                     JSR   ,Y
+1153 2c31 35 10                     PULS  X
+1154 2c33 26 08                     BNE   FTFR
+1155 2c35 30 02                     LEAX  2,X
+1156 2c37 8c 2c c9                  CMPX  #LTFR
+1157 2c3a 26 ee                     BNE   TTFR1
+1158 2c3c 39                        RTS
+1159 2c3d ce 2c c9           FTFR   LDU   #LTFR
+1160 2c40 16 06 a3                  LBRA  OUTERR
+1161                         
+1162 2c43 4f                 CLRREG CLRA
+1163 2c44 5f                        CLRB
+1164 2c45 8e 00 00                  LDX   #0
+1165 2c48 10 8e 00 00               LDY   #0
+1166 2c4c ce 00 00                  LDU   #0
+1167 2c4f 1f 8b                     TFR   A,DP
+1168 2c51 1f 8a                     TFR   A,CC
+1169 2c53 39                        RTS
+1170 2c54 8d ed              TBTFR1 BSR   CLRREG
+1171 2c56 cc 56 78                  LDD   #$5678
+1172 2c59 1f 01                     TFR   D,X
+1173 2c5b 8c 56 78                  CMPX  #$5678  
+1174 2c5e 39                        RTS
+1175 2c5f 8d e2              TBTFR2 BSR   CLRREG
+1176 2c61 8e 12 34                  LDX   #$1234
+1177 2c64 1f 12                     TFR   X,Y
+1178 2c66 10 8c 12 34               CMPY  #$1234  
+1179 2c6a 39                        RTS
+1180 2c6b 8d d6              TBTFR3 BSR   CLRREG
+1181 2c6d 10 8e 55 00               LDY   #$5500
+1182 2c71 1f 23                     TFR   Y,U
+1183 2c73 11 83 55 00               CMPU  #$5500  
+1184 2c77 39                        RTS
+1185 2c78 8d c9              TBTFR4 BSR   CLRREG
+1186 2c7a ce fe ff                  LDU   #$FEFF
+1187 2c7d 1f 30                     TFR   U,D
+1188 2c7f 10 83 fe ff               CMPD  #$FEFF  
+1189 2c83 39                        RTS
+1190 2c84 8d bd              TBTFR5 BSR   CLRREG
+1191 2c86 86 55                     LDA   #$55
+1192 2c88 1f 89                     TFR   A,B
+1193 2c8a c1 55                     CMPB  #$55  
+1194 2c8c 39                        RTS
+1195 2c8d 8d b4              TBTFR6 BSR   CLRREG
+1196 2c8f c6 aa                     LDB   #$AA
+1197 2c91 1f 9b                     TFR   B,DP
+1198 2c93 34 08                     PSHS  DP
+1199 2c95 35 02                     PULS  A
+1200 2c97 81 aa                     CMPA  #$AA
+1201 2c99 39                        RTS
+1202 2c9a 8d a7              TBTFR7 BSR   CLRREG
+1203 2c9c 86 03                     LDA   #$03
+1204 2c9e 34 02                     PSHS  A
+1205 2ca0 4f                        CLRA
+1206 2ca1 35 08                     PULS  DP
+1207 2ca3 1f ba                     TFR   DP,CC
+1208 2ca5 34 01                     PSHS  CC
+1209 2ca7 35 02                     PULS  A
+1210 2ca9 81 03                     CMPA  #$03
+1211 2cab 39                        RTS
+1212 2cac 8d 95              TBTFR8 BSR   CLRREG
+1213 2cae 86 01                     LDA   #$01
+1214 2cb0 34 02                     PSHS  A
+1215 2cb2 35 01                     PULS  CC
+1216 2cb4 1f a8                     TFR   CC,A
+1217 2cb6 81 01                     CMPA  #$01
+1218 2cb8 39                        RTS
+1219                         
+1220 2cb9 2c 54              TBTFR  FDB   TBTFR1
+1221 2cbb 2c 5f                     FDB   TBTFR2
+1222 2cbd 2c 6b                     FDB   TBTFR3
+1223 2cbf 2c 78                     FDB   TBTFR4
+1224 2cc1 2c 84                     FDB   TBTFR5
+1225 2cc3 2c 8d                     FDB   TBTFR6
+1226 2cc5 2c 9a                     FDB   TBTFR7
+1227 2cc7 2c ac                     FDB   TBTFR8
+1228 2cc9 54 46 52           LTFR   FCC   'TFR'
+1229 2ccc 0d 0a 04           	FCB	13,10,EOT
+1230                         
+1231                         **************************************************
+1232                         * Test EXG
+1233                         **************************************************
+1234 2ccf 8e 2d ab           TEXG   LDX   #TBEXG
+1235 2cd2 34 10              TEXG1  PSHS  X
+1236 2cd4 10 ae 84                  LDY   ,X
+1237 2cd7 ad a4                     JSR   ,Y
+1238 2cd9 35 10                     PULS  X
+1239 2cdb 26 08                     BNE   FEXG
+1240 2cdd 30 02                     LEAX  2,X
+1241 2cdf 8c 2d bb                  CMPX  #LEXG
+1242 2ce2 26 ee                     BNE   TEXG1
+1243 2ce4 39                        RTS
+1244 2ce5 ce 2d bb           FEXG   LDU   #LEXG
+1245 2ce8 16 05 fb                  LBRA  OUTERR
+1246                         
+1247 2ceb 17 ff 55           TBEXG1 LBSR  CLRREG
+1248 2cee cc 56 78                  LDD   #$5678
+1249 2cf1 8e a5 5a                  LDX   #$A55A
+1250 2cf4 1e 01                     EXG   D,X
+1251 2cf6 8c 56 78                  CMPX  #$5678
+1252 2cf9 26 04                     BNE   TBEXGE
+1253 2cfb 10 83 a5 5a               CMPD  #$A55A  
+1254 2cff 39                 TBEXGE RTS
+1255 2d00 17 ff 40           TBEXG2 LBSR  CLRREG
+1256 2d03 8e 12 34                  LDX   #$1234
+1257 2d06 10 8e 08 15               LDY   #$0815
+1258 2d0a 1e 12                     EXG   X,Y
+1259 2d0c 10 8c 12 34               CMPY  #$1234
+1260 2d10 26 ed                     BNE   TBEXGE
+1261 2d12 8c 08 15                  CMPX  #$0815
+1262 2d15 39                        RTS
+1263 2d16 17 ff 2a           TBEXG3 LBSR  CLRREG
+1264 2d19 10 8e 55 00               LDY   #$5500
+1265 2d1d ce 47 11                  LDU   #$4711
+1266 2d20 1e 23                     EXG   Y,U
+1267 2d22 11 83 55 00               CMPU  #$5500 
+1268 2d26 26 d7                     BNE   TBEXGE 
+1269 2d28 10 8c 47 11               CMPY  #$4711  
+1270 2d2c 39                        RTS
+1271 2d2d 17 ff 13           TBEXG4 LBSR  CLRREG
+1272 2d30 ce fe ff                  LDU   #$FEFF
+1273 2d33 cc 99 99                  LDD   #$9999
+1274 2d36 1e 30                     EXG   U,D
+1275 2d38 10 83 fe ff               CMPD  #$FEFF
+1276 2d3c 26 c1                     BNE   TBEXGE
+1277 2d3e 11 83 99 99               CMPU  #$9999  
+1278 2d42 39                        RTS
+1279 2d43 17 fe fd           TBEXG5 LBSR  CLRREG
+1280 2d46 86 55                     LDA   #$55
+1281 2d48 c6 aa                     LDB   #$AA
+1282 2d4a 1e 89                     EXG   A,B
+1283 2d4c c1 55                     CMPB  #$55  
+1284 2d4e 26 af                     BNE   TBEXGE
+1285 2d50 81 aa                     CMPA  #$AA
+1286 2d52 39                        RTS
+1287 2d53 17 fe ed           TBEXG6 LBSR  CLRREG
+1288 2d56 c6 aa                     LDB   #$AA
+1289 2d58 86 44                     LDA   #$44
+1290 2d5a 34 02                     PSHS  A
+1291 2d5c 4f                        CLRA
+1292 2d5d 35 08                     PULS  DP
+1293 2d5f 1e 9b                     EXG   B,DP
+1294 2d61 34 08                     PSHS  DP
+1295 2d63 35 02                     PULS  A
+1296 2d65 81 aa                     CMPA  #$AA
+1297 2d67 26 96                     BNE   TBEXGE
+1298 2d69 c1 44                     CMPB  #$44
+1299 2d6b 39                        RTS
+1300 2d6c 17 fe d4           TBEXG7 LBSR  CLRREG
+1301 2d6f 86 03                     LDA   #$03
+1302 2d71 34 02                     PSHS  A
+1303 2d73 4f                        CLRA
+1304 2d74 35 08                     PULS  DP
+1305 2d76 86 30                     LDA   #$30
+1306 2d78 34 02                     PSHS  A
+1307 2d7a 4f                        CLRA
+1308 2d7b 35 01                     PULS  CC
+1309 2d7d 1e ba                     EXG   DP,CC
+1310 2d7f 34 01                     PSHS  CC
+1311 2d81 35 02                     PULS  A
+1312 2d83 34 08                     PSHS  DP
+1313 2d85 35 04                     PULS  B
+1314 2d87 81 03                     CMPA  #$03
+1315 2d89 10 26 ff 72               LBNE  TBEXGE
+1316 2d8d c1 30                     CMPB  #$30
+1317 2d8f 39                        RTS
+1318 2d90 17 fe b0           TBEXG8 LBSR  CLRREG
+1319 2d93 86 11                     LDA   #$11
+1320 2d95 c6 99                     LDB   #$99
+1321 2d97 34 04                     PSHS  B
+1322 2d99 5f                        CLRB
+1323 2d9a 35 01                     PULS  CC
+1324 2d9c 1e a8                     EXG   CC,A
+1325 2d9e 34 01                     PSHS  CC
+1326 2da0 35 04                     PULS  B
+1327 2da2 81 99                     CMPA  #$99
+1328 2da4 10 26 ff 57               LBNE  TBEXGE
+1329 2da8 c1 11                     CMPB  #$11
+1330 2daa 39                        RTS
+1331                         
+1332 2dab 2c eb              TBEXG  FDB   TBEXG1
+1333 2dad 2d 00                     FDB   TBEXG2
+1334 2daf 2d 16                     FDB   TBEXG3
+1335 2db1 2d 2d                     FDB   TBEXG4
+1336 2db3 2d 43                     FDB   TBEXG5
+1337 2db5 2d 53                     FDB   TBEXG6
+1338 2db7 2d 6c                     FDB   TBEXG7
+1339 2db9 2d 90                     FDB   TBEXG8
+1340 2dbb 45 58 47           LEXG   FCC   'EXG'
+1341 2dbe 0d 0a 04           	FCB	13,10,EOT
+1342                         
+1343                         
+1344                         **************************************************
+1345                         * Test Index Addressing modes
+1346                         **************************************************
+1347 2dc1 34 10              CLRMEM PSHS  X
+1348 2dc3 8e 7f 80                  LDX   #EXTREG-128
+1349 2dc6 4f                        CLRA
+1350 2dc7 6f 80              CLRM1  CLR   ,X+
+1351 2dc9 4c                        INCA
+1352 2dca 26 fb                     BNE   CLRM1
+1353 2dcc 35 90                     PULS  X,PC
+1354                         
+1355 2dce ce 31 df           TAD1   LDU   #LAD1
+1356 2dd1 8e 80 00                  LDX   #EXTREG
+1357                         * LDA ,X
+1358 2dd4 8d eb                     BSR   CLRMEM
+1359 2dd6 86 55                     LDA   #$55
+1360 2dd8 b7 80 00                  STA   EXTREG
+1361 2ddb a6 84                     LDA   ,X
+1362 2ddd 81 55                     CMPA  #$55
+1363 2ddf 10 26 05 03               LBNE  OUTERR
+1364                         * LDA 1,X
+1365 2de3 8d dc                     BSR   CLRMEM
+1366 2de5 86 12                     LDA   #$12
+1367 2de7 b7 80 01                  STA   EXTREG+1
+1368 2dea a6 01                     LDA   1,X
+1369 2dec 81 12                     CMPA  #$12
+1370 2dee 10 26 04 f4               LBNE  OUTERR
+1371                         * LDA 127,X
+1372 2df2 8d cd                     BSR   CLRMEM
+1373 2df4 86 44                     LDA   #$44
+1374 2df6 b7 80 7f                  STA   EXTREG+127
+1375 2df9 a6 88 7f                  LDA   127,X
+1376 2dfc 81 44                     CMPA  #$44
+1377 2dfe 10 26 04 e4               LBNE  OUTERR
+1378                         * LDA -1,X
+1379 2e02 8d bd                     BSR   CLRMEM
+1380 2e04 86 34                     LDA   #$34
+1381 2e06 b7 7f ff                  STA   EXTREG-1
+1382 2e09 a6 1f                     LDA   -1,X
+1383 2e0b 81 34                     CMPA  #$34
+1384 2e0d 10 26 04 d5               LBNE  OUTERR
+1385                         * LDA -128,X
+1386 2e11 8d ae                     BSR   CLRMEM
+1387 2e13 86 aa                     LDA   #$AA
+1388 2e15 b7 7f 80                  STA   EXTREG-128
+1389 2e18 a6 88 80                  LDA   -128,X
+1390 2e1b 81 aa                     CMPA  #$AA
+1391 2e1d 10 26 04 c5               LBNE  OUTERR
+1392 2e21 39                        RTS
+1393                         
+1394                         * LDA ,X+
+1395 2e22 8e 80 00           TAD2   LDX   #EXTREG
+1396 2e25 ce 31 ea                  LDU   #LAD2
+1397 2e28 8d 97                     BSR   CLRMEM
+1398 2e2a cc a5 5a                  LDD   #$A55A
+1399 2e2d fd 80 00                  STD   EXTREG
+1400 2e30 a6 80                     LDA   ,X+
+1401 2e32 81 a5                     CMPA  #$A5
+1402 2e34 10 26 04 ae               LBNE  OUTERR
+1403 2e38 a6 80                     LDA   ,X+
+1404 2e3a 81 5a                     CMPA  #$5A
+1405 2e3c 10 26 04 a6               LBNE  OUTERR
+1406 2e40 39                        RTS
+1407                         
+1408                         * LDD ,X++
+1409 2e41 8e 80 00           TAD3   LDX   #EXTREG
+1410 2e44 ce 31 f4                  LDU   #LAD3
+1411 2e47 17 ff 77                  LBSR  CLRMEM
+1412 2e4a cc a5 5a                  LDD   #$A55A
+1413 2e4d fd 80 00                  STD   EXTREG
+1414 2e50 cc 78 9a                  LDD   #$789A
+1415 2e53 fd 80 02                  STD   EXTREG+2
+1416 2e56 ec 81                     LDD   ,X++
+1417 2e58 10 83 a5 5a               CMPD  #$A55A
+1418 2e5c 10 26 04 86               LBNE  OUTERR
+1419 2e60 ec 81                     LDD   ,X++
+1420 2e62 10 83 78 9a               CMPD  #$789A
+1421 2e66 10 26 04 7c               LBNE  OUTERR
+1422 2e6a 39                        RTS
+1423                         
+1424                         * LDA ,-X
+1425 2e6b 8e 80 00           TAD4   LDX   #EXTREG
+1426 2e6e ce 31 ff                  LDU   #LAD4
+1427 2e71 17 ff 4d                  LBSR  CLRMEM
+1428 2e74 cc a5 5a                  LDD   #$A55A
+1429 2e77 fd 7f fe                  STD   EXTREG-2
+1430 2e7a a6 82                     LDA   ,-X
+1431 2e7c 81 5a                     CMPA  #$5A
+1432 2e7e 10 26 04 64               LBNE  OUTERR
+1433 2e82 a6 82                     LDA   ,-X
+1434 2e84 81 a5                     CMPA  #$A5
+1435 2e86 10 26 04 5c               LBNE  OUTERR
+1436 2e8a 39                        RTS
+1437                         
+1438                         * LDD ,--X
+1439 2e8b 8e 80 00           TAD5   LDX   #EXTREG
+1440 2e8e ce 32 09                  LDU   #LAD5
+1441 2e91 17 ff 2d                  LBSR  CLRMEM
+1442 2e94 cc a5 5a                  LDD   #$A55A
+1443 2e97 fd 7f fe                  STD   EXTREG-2
+1444 2e9a cc 78 9a                  LDD   #$789A
+1445 2e9d fd 7f fc                  STD   EXTREG-4
+1446 2ea0 ec 83                     LDD   ,--X
+1447 2ea2 10 83 a5 5a               CMPD  #$A55A
+1448 2ea6 10 26 04 3c               LBNE  OUTERR
+1449 2eaa ec 83                     LDD   ,--X
+1450 2eac 10 83 78 9a               CMPD  #$789A
+1451 2eb0 10 26 04 32               LBNE  OUTERR
+1452 2eb4 39                        RTS
+1453                         
+1454                         * LDA A,X
+1455 2eb5 ce 32 14           TAD6   LDU   #LAD6
+1456 2eb8 8e 80 00                  LDX   #EXTREG
+1457 2ebb 17 ff 03                  LBSR  CLRMEM
+1458 2ebe 86 12                     LDA   #$12
+1459 2ec0 b7 80 01                  STA   EXTREG+1
+1460 2ec3 86 01                     LDA   #1
+1461 2ec5 a6 86                     LDA   A,X
+1462 2ec7 81 12                     CMPA  #$12
+1463 2ec9 10 26 04 19               LBNE  OUTERR
+1464 2ecd 17 fe f1                  LBSR  CLRMEM
+1465 2ed0 86 44                     LDA   #$44
+1466 2ed2 b7 80 7f                  STA   EXTREG+127
+1467 2ed5 86 7f                     LDA   #127
+1468 2ed7 a6 86                     LDA   A,X
+1469 2ed9 81 44                     CMPA  #$44
+1470 2edb 10 26 04 07               LBNE  OUTERR
+1471 2edf 39                        RTS
+1472                         
+1473                         * LDA B,Y
+1474 2ee0 ce 32 1e           TAD7   LDU   #LAD7
+1475 2ee3 10 8e 80 00               LDY   #EXTREG
+1476 2ee7 17 fe d7                  LBSR  CLRMEM
+1477 2eea 86 34                     LDA   #$34
+1478 2eec b7 7f ff                  STA   EXTREG-1
+1479 2eef c6 ff                     LDB   #-1
+1480 2ef1 a6 a5                     LDA   B,Y
+1481 2ef3 81 34                     CMPA  #$34
+1482 2ef5 10 26 03 ed               LBNE  OUTERR
+1483 2ef9 17 fe c5                  LBSR  CLRMEM
+1484 2efc 86 aa                     LDA   #$AA
+1485 2efe b7 7f 80                  STA   EXTREG-128
+1486 2f01 c6 80                     LDB   #-128
+1487 2f03 a6 a5                     LDA   B,Y
+1488 2f05 81 aa                     CMPA  #$AA
+1489 2f07 10 26 03 db               LBNE  OUTERR
+1490 2f0b 39                        RTS
+1491                         
+1492                         * LDD D,X
+1493 2f0c ce 32 28           TAD8   LDU   #LAD8
+1494 2f0f 8e 00 00                  LDX   #0
+1495 2f12 17 fe ac                  LBSR  CLRMEM
+1496 2f15 cc 12 89                  LDD   #$1289
+1497 2f18 fd 80 00                  STD   EXTREG
+1498 2f1b cc 80 00                  LDD   #EXTREG
+1499 2f1e ec 8b                     LDD   D,X
+1500 2f20 10 83 12 89               CMPD  #$1289
+1501 2f24 10 26 03 be               LBNE  OUTERR
+1502 2f28 8e 80 00                  LDX   #$8000
+1503 2f2b 17 fe 93                  LBSR  CLRMEM
+1504 2f2e cc 22 99                  LDD   #$2299
+1505 2f31 fd 80 00                  STD   EXTREG
+1506 2f34 cc 00 00                  LDD   #EXTREG-$8000
+1507 2f37 ec 8b                     LDD   D,X
+1508 2f39 10 83 22 99               CMPD  #$2299
+1509 2f3d 10 26 03 a5               LBNE  OUTERR
+1510 2f41 39                        RTS
+1511                         
+1512                         * LDD n16,X
+1513 2f42 ce 32 32           TAD9   LDU   #LAD9
+1514 2f45 8e 00 00                  LDX   #0
+1515 2f48 17 fe 76                  LBSR  CLRMEM
+1516 2f4b cc 12 89                  LDD   #$1289
+1517 2f4e fd 80 00                  STD   EXTREG
+1518 2f51 ec 89 80 00               LDD   EXTREG,X
+1519 2f55 10 83 12 89               CMPD  #$1289
+1520 2f59 10 26 03 89               LBNE  OUTERR
+1521 2f5d 8e 80 00                  LDX   #$8000
+1522 2f60 17 fe 5e                  LBSR  CLRMEM
+1523 2f63 cc 22 99                  LDD   #$2299
+1524 2f66 fd 80 00                  STD   EXTREG
+1525 2f69 ec 84                     LDD   EXTREG-$8000,X
+1526 2f6b 10 83 22 99               CMPD  #$2299
+1527 2f6f 10 26 03 73               LBNE  OUTERR
+1528 2f73 39                        RTS
+1529                         
+1530                         * LDA n8,PC
+1531 2f74 00                 REG81  FCB   0
+1532 2f75 ce 32 3e           TADA   LDU   #LADA
+1533 2f78 17 fe 46                  LBSR  CLRMEM
+1534 2f7b 86 13                     LDA   #$13
+1535 2f7d b7 2f 74                  STA   REG81
+1536 2f80 a6 8c f1                  LDA   <REG81,PCR
+1537 2f83 81 13                     CMPA  #$13
+1538 2f85 10 26 03 5d               LBNE  OUTERR
+1539 2f89 17 fe 35                  LBSR  CLRMEM
+1540 2f8c 86 23                     LDA   #$23
+1541 2f8e b7 2f 9b                  STA   REG82
+1542 2f91 a6 8c 07                  LDA   <REG82,PCR
+1543 2f94 81 23                     CMPA  #$23
+1544 2f96 10 26 03 4c               LBNE  OUTERR
+1545 2f9a 39                        RTS
+1546 2f9b 00                 REG82  FCB   0
+1547                         
+1548                         * LDA n16,PC
+1549 2f9c ce 32 4a           TADB   LDU   #LADB
+1550 2f9f 17 fe 1f                  LBSR  CLRMEM
+1551 2fa2 cc 98 76                  LDD   #$9876
+1552 2fa5 fd 20 0f                  STD   REG161
+1553 2fa8 ec 8d f0 63               LDD   >REG161,PCR
+1554 2fac 10 83 98 76               CMPD  #$9876
+1555 2fb0 10 26 03 32               LBNE  OUTERR
+1556 2fb4 17 fe 0a                  LBSR  CLRMEM
+1557 2fb7 cc 54 32                  LDD   #$5432
+1558 2fba fd 33 03                  STD   REG162
+1559 2fbd ec 8d 03 42               LDD   >REG162,PCR
+1560 2fc1 10 83 54 32               CMPD  #$5432
+1561 2fc5 10 26 03 1d               LBNE  OUTERR
+1562 2fc9 39                        RTS
+1563                         
+1564 2fca ce 32 57           TADI1  LDU   #LADI1
+1565 2fcd 8e 80 00                  LDX   #EXTREG
+1566                         * LEAY [,X]
+1567 2fd0 17 fd ee                  LBSR  CLRMEM
+1568 2fd3 cc 55 22                  LDD   #$5522
+1569 2fd6 fd 80 00                  STD   EXTREG
+1570 2fd9 31 94                     LEAY  [,X]
+1571 2fdb 10 8c 55 22               CMPY  #$5522
+1572 2fdf 10 26 03 03               LBNE  OUTERR
+1573                         * LEAY [1,X]
+1574 2fe3 17 fd db                  LBSR  CLRMEM
+1575 2fe6 cc 12 34                  LDD   #$1234
+1576 2fe9 fd 80 01                  STD   EXTREG+1
+1577 2fec 31 98 01                  LEAY  [1,X]
+1578 2fef 10 8c 12 34               CMPY  #$1234
+1579 2ff3 10 26 02 ef               LBNE  OUTERR
+1580                         * LEAY [127,X]
+1581 2ff7 17 fd c7                  LBSR  CLRMEM
+1582 2ffa cc 44 44                  LDD   #$4444
+1583 2ffd fd 80 7f                  STD   EXTREG+127
+1584 3000 31 98 7f                  LEAY  [127,X]
+1585 3003 10 8c 44 44               CMPY  #$4444
+1586 3007 10 26 02 db               LBNE  OUTERR
+1587                         * LEAY [-1,X]
+1588 300b 17 fd b3                  LBSR  CLRMEM
+1589 300e cc 34 56                  LDD   #$3456
+1590 3011 fd 7f ff                  STD   EXTREG-1
+1591 3014 31 98 ff                  LEAY  [-1,X]
+1592 3017 10 8c 34 56               CMPY  #$3456
+1593 301b 10 26 02 c7               LBNE  OUTERR
+1594                         * LEAY [-128,X]
+1595 301f 17 fd 9f                  LBSR  CLRMEM
+1596 3022 cc aa aa                  LDD   #$AAAA
+1597 3025 fd 7f 80                  STD   EXTREG-128
+1598 3028 31 98 80                  LEAY  [-128,X]
+1599 302b 10 8c aa aa               CMPY  #$AAAA
+1600 302f 10 26 02 b3               LBNE  OUTERR
+1601 3033 39                        RTS
+1602                         
+1603                         * LEAY [,X++]
+1604 3034 8e 80 00           TADI3  LDX   #EXTREG
+1605 3037 ce 32 65                  LDU   #LADI3
+1606 303a 17 fd 84                  LBSR  CLRMEM
+1607 303d cc a5 5a                  LDD   #$A55A
+1608 3040 fd 80 00                  STD   EXTREG
+1609 3043 cc 5a a5                  LDD   #$5AA5
+1610 3046 fd 80 02                  STD   EXTREG+2
+1611 3049 31 91                     LEAY  [,X++]
+1612 304b 10 8c a5 5a               CMPY  #$A55A
+1613 304f 10 26 02 93               LBNE  OUTERR
+1614 3053 31 91                     LEAY  [,X++]
+1615 3055 10 8c 5a a5               CMPY  #$5AA5
+1616 3059 10 26 02 89               LBNE  OUTERR
+1617 305d 39                        RTS
+1618                         
+1619                         * LEAY [,--X]
+1620 305e 8e 80 00           TADI5  LDX   #EXTREG
+1621 3061 ce 32 73                  LDU   #LADI5
+1622 3064 17 fd 5a                  LBSR  CLRMEM
+1623 3067 cc a5 5a                  LDD   #$A55A
+1624 306a fd 7f fe                  STD   EXTREG-2
+1625 306d cc 78 9a                  LDD   #$789A
+1626 3070 fd 7f fc                  STD   EXTREG-4
+1627 3073 31 93                     LEAY  [,--X]
+1628 3075 10 8c a5 5a               CMPY  #$A55A
+1629 3079 10 26 02 69               LBNE  OUTERR
+1630 307d 31 93                     LEAY  [,--X]
+1631 307f 10 8c 78 9a               CMPY  #$789A
+1632 3083 10 26 02 5f               LBNE  OUTERR
+1633 3087 39                        RTS
+1634                         
+1635                         * LEAY [A,X]
+1636 3088 ce 32 81           TADI6  LDU   #LADI6
+1637 308b 8e 80 00                  LDX   #EXTREG
+1638 308e 17 fd 30                  LBSR  CLRMEM
+1639 3091 cc 12 34                  LDD   #$1234
+1640 3094 fd 80 01                  STD   EXTREG+1
+1641 3097 86 01                     LDA   #1
+1642 3099 31 96                     LEAY  [A,X]
+1643 309b 10 8c 12 34               CMPY  #$1234
+1644 309f 10 26 02 43               LBNE  OUTERR
+1645 30a3 17 fd 1b                  LBSR  CLRMEM
+1646 30a6 cc 44 44                  LDD   #$4444
+1647 30a9 fd 80 7f                  STD   EXTREG+127
+1648 30ac 86 7f                     LDA   #127
+1649 30ae 31 96                     LEAY  [A,X]
+1650 30b0 10 8c 44 44               CMPY  #$4444
+1651 30b4 10 26 02 2e               LBNE  OUTERR
+1652 30b8 39                        RTS
+1653                         
+1654                         * LEAY [B,X]
+1655 30b9 ce 32 8e           TADI7  LDU   #LADI7
+1656 30bc 8e 80 00                  LDX   #EXTREG
+1657 30bf 17 fc ff                  LBSR  CLRMEM
+1658 30c2 cc 34 56                  LDD   #$3456
+1659 30c5 fd 7f ff                  STD   EXTREG-1
+1660 30c8 c6 ff                     LDB   #-1
+1661 30ca 31 95                     LEAY  [B,X]
+1662 30cc 10 8c 34 56               CMPY  #$3456
+1663 30d0 10 26 02 12               LBNE  OUTERR
+1664 30d4 17 fc ea                  LBSR  CLRMEM
+1665 30d7 cc aa aa                  LDD   #$AAAA
+1666 30da fd 7f 80                  STD   EXTREG-128
+1667 30dd c6 80                     LDB   #-128
+1668 30df 31 95                     LEAY  [B,X]
+1669 30e1 10 8c aa aa               CMPY  #$AAAA
+1670 30e5 10 26 01 fd               LBNE  OUTERR
+1671 30e9 39                        RTS
+1672                         
+1673                         * LEAY [D,X]
+1674 30ea ce 32 9b           TADI8  LDU   #LADI8
+1675 30ed 8e 00 00                  LDX   #0
+1676 30f0 17 fc ce                  LBSR  CLRMEM
+1677 30f3 cc 12 89                  LDD   #$1289
+1678 30f6 fd 80 00                  STD   EXTREG
+1679 30f9 cc 80 00                  LDD   #EXTREG
+1680 30fc 31 9b                     LEAY  [D,X]
+1681 30fe 10 8c 12 89               CMPY  #$1289
+1682 3102 10 26 01 e0               LBNE  OUTERR
+1683 3106 8e 80 00                  LDX   #$8000
+1684 3109 17 fc b5                  LBSR  CLRMEM
+1685 310c cc 22 99                  LDD   #$2299
+1686 310f fd 80 00                  STD   EXTREG
+1687 3112 cc 00 00                  LDD   #EXTREG-$8000
+1688 3115 31 9b                     LEAY  [D,X]
+1689 3117 10 8c 22 99               CMPY  #$2299
+1690 311b 10 26 01 c7               LBNE  OUTERR
+1691 311f 39                        RTS
+1692                         
+1693                         * LEAY [n16,X]
+1694 3120 ce 32 a8           TADI9  LDU   #LADI9
+1695 3123 8e 00 00                  LDX   #0
+1696 3126 17 fc 98                  LBSR  CLRMEM
+1697 3129 cc 12 89                  LDD   #$1289
+1698 312c fd 80 00                  STD   EXTREG
+1699 312f 31 99 80 00               LEAY  [EXTREG,X]
+1700 3133 10 8c 12 89               CMPY  #$1289
+1701 3137 10 26 01 ab               LBNE  OUTERR
+1702 313b 8e 80 00                  LDX   #$8000
+1703 313e 17 fc 80                  LBSR  CLRMEM
+1704 3141 cc 22 99                  LDD   #$2299
+1705 3144 fd 80 00                  STD   EXTREG
+1706 3147 31 94                     LEAY  [EXTREG-$8000,X]
+1707 3149 10 8c 22 99               CMPY  #$2299
+1708 314d 10 26 01 95               LBNE  OUTERR
+1709 3151 39                        RTS
+1710                         
+1711                         * LEAY [n8,PCR]
+1712 3152 00 00              REGI81 FDB   0
+1713 3154 ce 32 b7           TADIA  LDU   #LADIA
+1714 3157 17 fc 67                  LBSR  CLRMEM
+1715 315a cc 13 57                  LDD   #$1357
+1716 315d fd 31 52                  STD   REGI81
+1717 3160 31 9c ef                  LEAY  [REGI81,PCR]
+1718 3163 10 8c 13 57               CMPY  #$1357
+1719 3167 10 26 01 7b               LBNE  OUTERR
+1720 316b 17 fc 53                  LBSR  CLRMEM
+1721 316e cc 23 45                  LDD   #$2345
+1722 3171 fd 31 81                  STD   REGI82
+1723 3174 31 9d 00 09               LEAY  [REGI82,PCR]
+1724 3178 10 8c 23 45               CMPY  #$2345
+1725 317c 10 26 01 66               LBNE  OUTERR
+1726 3180 39                        RTS
+1727 3181 00 00              REGI82 FDB   0
+1728                         
+1729                         * LEAY [n16,PC]
+1730 3183 ce 32 c7           TADIB  LDU   #LADIB
+1731 3186 17 fc 38                  LBSR  CLRMEM
+1732 3189 cc 98 76                  LDD   #$9876
+1733 318c fd 20 0f                  STD   REG161
+1734 318f 31 9d ee 7c               LEAY  [REG161,PCR]
+1735 3193 10 8c 98 76               CMPY  #$9876
+1736 3197 10 26 01 4b               LBNE  OUTERR
+1737 319b 17 fc 23                  LBSR  CLRMEM
+1738 319e cc 54 32                  LDD   #$5432
+1739 31a1 fd 33 03                  STD   REG162
+1740 31a4 31 9d 01 5b               LEAY  [REG162,PCR]
+1741 31a8 10 8c 54 32               CMPY  #$5432
+1742 31ac 10 26 01 36               LBNE  OUTERR
+1743 31b0 39                        RTS
+1744                         
+1745                         * LEAY [addr]
+1746 31b1 ce 32 d8           TADIC  LDU   #LADIC
+1747 31b4 17 fc 0a                  LBSR  CLRMEM
+1748 31b7 cc 98 76                  LDD   #$9876
+1749 31ba fd 20 0f                  STD   REG161
+1750 31bd 31 9f 20 0f               LEAY  [REG161,]
+1751 31c1 10 8c 98 76               CMPY  #$9876
+1752 31c5 10 26 01 1d               LBNE  OUTERR
+1753 31c9 17 fb f5                  LBSR  CLRMEM
+1754 31cc cc 54 32                  LDD   #$5432
+1755 31cf fd 33 03                  STD   REG162
+1756 31d2 31 9f 33 03               LEAY  [REG162,]
+1757 31d6 10 8c 54 32               CMPY  #$5432
+1758 31da 10 26 01 08               LBNE  OUTERR
+1759 31de 39                        RTS
+1760                         
+1761 31df 4c 44 41 20 6e 38  LAD1   FCC   'LDA n8,X'
+     2c 58
+1762 31e7 0d 0a 04           	FCB	13,10,EOT
+1763 31ea 4c 44 41 20 2c 58  LAD2   FCC   'LDA ,X+'
+     2b
+1764 31f1 0d 0a 04           	FCB	13,10,EOT
+1765 31f4 4c 44 44 20 2c 58  LAD3   FCC   'LDD ,X++'
+     2b 2b
+1766 31fc 0d 0a 04           	FCB	13,10,EOT
+1767 31ff 4c 44 41 20 2c 2d  LAD4   FCC   'LDA ,-X'
+     58
+1768 3206 0d 0a 04           	FCB	13,10,EOT
+1769 3209 4c 44 44 20 2c 2d  LAD5   FCC   'LDD ,--X'
+     2d 58
+1770 3211 0d 0a 04           	FCB	13,10,EOT
+1771 3214 4c 44 41 20 41 2c  LAD6   FCC   'LDA A,X'
+     58
+1772 321b 0d 0a 04           	FCB	13,10,EOT
+1773 321e 4c 44 41 20 42 2c  LAD7   FCC   'LDA B,Y'
+     59
+1774 3225 0d 0a 04           	FCB	13,10,EOT
+1775 3228 4c 44 44 20 44 2c  LAD8   FCC   'LDD D,X'
+     58
+1776 322f 0d 0a 04           	FCB	13,10,EOT
+1777 3232 4c 44 44 20 6e 31  LAD9   FCC   'LDD n16,X'
+     36 2c 58
+1778 323b 0d 0a 04           	FCB	13,10,EOT
+1779 323e 4c 44 41 20 6e 38  LADA   FCC   'LDA n8,PC'
+     2c 50 43
+1780 3247 0d 0a 04           	FCB	13,10,EOT
+1781 324a 4c 44 44 20 6e 31  LADB   FCC   'LDD n16,PC'
+     36 2c 50 43
+1782 3254 0d 0a 04           	FCB	13,10,EOT
+1783 3257 4c 45 41 58 20 5b  LADI1  FCC   'LEAX [n8,X]'
+     6e 38 2c 58 5d
+1784 3262 0d 0a 04           	FCB	13,10,EOT
+1785 3265 4c 45 41 58 20 5b  LADI3  FCC   'LEAX [,X++]'
+     2c 58 2b 2b 5d
+1786 3270 0d 0a 04           	FCB	13,10,EOT
+1787 3273 4c 45 41 58 20 5b  LADI5  FCC   'LEAX [,--X]'
+     2c 2d 2d 58 5d
+1788 327e 0d 0a 04           	FCB	13,10,EOT
+1789 3281 4c 45 41 58 20 5b  LADI6  FCC   'LEAX [A,X]'
+     41 2c 58 5d
+1790 328b 0d 0a 04           	FCB	13,10,EOT
+1791 328e 4c 45 41 58 20 5b  LADI7  FCC   'LEAX [B,Y]'
+     42 2c 59 5d
+1792 3298 0d 0a 04           	FCB	13,10,EOT
+1793 329b 4c 45 41 58 20 5b  LADI8  FCC   'LEAX [D,X]'
+     44 2c 58 5d
+1794 32a5 0d 0a 04           	FCB	13,10,EOT
+1795 32a8 4c 45 41 58 20 5b  LADI9  FCC   'LEAX [n16,X]'
+     6e 31 36 2c 58 5d
+1796 32b4 0d 0a 04           	FCB	13,10,EOT
+1797 32b7 4c 45 41 58 20 5b  LADIA  FCC   'LEAX [n8,PCR]'
+     6e 38 2c 50 43 52
+     5d
+1798 32c4 0d 0a 04           	FCB	13,10,EOT
+1799 32c7 4c 45 41 58 20 5b  LADIB  FCC   'LEAX [n16,PCR]'
+     6e 31 36 2c 50 43
+     52 5d
+1800 32d5 0d 0a 04           	FCB	13,10,EOT
+1801 32d8 4c 45 41 58 20 5b  LADIC  FCC   'LEAX [addr]'
+     61 64 64 72 5d
+1802 32e3 0d 0a 04           	FCB	13,10,EOT
+1803                         
+1804                         **************************************************
+1805                         * Print error message for a failed Test
+1806                         * Parameters:
+1807                         * U: Pointer to Mnemonic
+1808                         **************************************************
+1809 32e6 86 01              OUTERR LDA   #1
+1810 32e8 b7 33 05                  STA   ERRFLG
+1811 32eb 8e 33 06                  LDX   #ERRM1
+1812 32ee bd 20 02                  JSR   PSTRNG
+1813                         *       SWI
+1814                         *       FCB   PDATA1
+1815 32f1 1f 31                     TFR   U,X
+1816 32f3 bd 20 02                  JSR   PSTRNG
+1817                         *       SWI
+1818                         *       FCB   PDATA1
+1819 32f6 39                        RTS
+1820                         
+1821                         **************************************************
+1822                         * Print a success message if all test have
+1823                         * been successfull
+1824                         **************************************************
+1825 32f7 b6 33 05           OUTSUC LDA   ERRFLG
+1826 32fa 26 06                     BNE   OUTS9
+1827 32fc 8e 33 14                  LDX   #SUCCES
+1828 32ff bd 20 02                  JSR   PSTRNG
+1829                         *       SWI
+1830                         *       FCB   PDATA1
+1831 3302 39                 OUTS9  RTS
+1832                         
+1833                         **************************************************
+1834                         * Misc data:
+1835                         **************************************************
+1836                         
+1837 3303 00 00              REG162 FDB   0
+1838 3305 00                 ERRFLG FCB   0
+1839                         
+1840 3306 46 61 69 6c 65 64  ERRM1  FCC   'Failed Test: '
+     20 54 65 73 74 3a
+     20
+1841 3313 04                 	FCB	EOT
+1842                         SUCCES 
+1843 3314 0d                 	FCB	13
+1844 3315 0a                 	FCB	10
+1845 3316 0d                 	FCB	13
+1846 3317 0a                 	FCB	10
+1847 3318 41 6c 6c 20 54 65  	FCC   'All Tests succeded'
+     73 74 73 20 73 75
+     63 63 65 64 65 64
+1848 332a 0d                 	FCB	13
+1849 332b 0a                 	FCB	10
+1850 332c 0d                 	FCB	13
+1851 332d 0a                 	FCB	10
+1852 332e 04                 	FCB	EOT
+1853                         
+1854                                END   BEGIN

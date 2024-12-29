@@ -1,0 +1,3 @@
+[submodule "asm/tt2"]
+	path = asm/tt2
+	url = https://github.com/Sphere-Corporation/GAME-TT.git
