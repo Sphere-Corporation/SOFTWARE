@@ -25,5 +25,5 @@ The table below contains descriptions and links to the repositories.
 |7. | PDS-V3N firmware source code |[Local](./firmware/)<br>[Site](https://sphere.computer/resources/firmware/PDS-V3N.a68)
 |8. | 1702A-Programmer |[Local](./kicad-1702a-programmer/)
 
-
+### Note:
 Whilst I do not wish to repeat a "collection" of Sphere-1 resources (for that, you should seek [Sphere Resources](https://sphere.computer/resources.html) by Ben Zotto, I did want to collect some useful stuff to me together as a convenience.
