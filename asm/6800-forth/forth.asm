@@ -1,0 +1,914 @@
+* SPHERE FORTH VER 1.0
+* LAST CHANGE 10/29/78
+* SPHERE FIXED ADDRESSES
+
+        .CR 6800                ; LOAD MC6800 CROSS OVERLAY
+        .TF forth.bin,BIN       ; OUTPUT FILE TO forth.bin IN BINARY FORMAT
+        .LI OFF                 ; SWITCH OFF ASSEMBLY LISTING (EXCEPT ERRORS)
+
+INPCHR .EQU  $FE71
+PUTCHR .EQU  $FCBC
+GETCHR .EQU  $FC4A
+CSRTST .EQU  $FCDB
+CLEARX .EQU  $FC3D
+HOMEX  .EQU  $FC37
+CRT000 .EQU  $E000
+CRTEND .EQU  $E200
+CSRPTR .EQU  $1C
+CSTATS .EQU  $09
+BLKNAM .EQU  $33
+BLKNA2 .EQU  $34
+ACIANO .EQU  $38
+NOPRNT .EQU  $3A
+BFRPTR .EQU  $3C
+BFRSZE .EQU  $3E
+RDBLK  .EQU  $FB91
+WRTBLK .EQU  $FB2D
+INTLZ  .EQU  $FB00
+CRLFX  .EQU  $FD14
+DEBUG  .EQU  $FE64
+BREAK  .EQU  $0108
+BRKADR .EQU  $0109
+* FORTH VARIABLES
+PARMST .EQU  $54
+PARMS2 .EQU  $55
+STKPTR .EQU  $56
+STKPT2 .EQU  $57
+KEYBUF .EQU  $58
+DICTIN .EQU  $5A
+DICTI2 .EQU  $5B
+STATUS .EQU  $5C
+DELIM  .EQU  $5D
+SCREEN .EQU  $5E
+CHAIN  .EQU  $60
+CHAIN2 .EQU  $61
+BASE   .EQU  $62
+BASE2  .EQU  $63
+NAMSAV .EQU  $64
+WORSAV .EQU  $65
+SAVE1  .EQU  $67
+SAVE2  .EQU  $68
+SAVE3  .EQU  $69
+SAVE4  .EQU  $6A
+SAVE5  .EQU  $6B
+SAVE6  .EQU  $6C
+SIGN   .EQU  $6D
+IMMEDI .EQU  $6E
+WORD1  .EQU  $6F
+WORD2  .EQU  $70
+WORD3  .EQU  $71
+WORD4  .EQU  $72
+HEX04  .EQU  $73
+MSGADR .EQU  $74
+MACHST .EQU  $76
+DFAULT .EQU  $77
+XSAVE1 .EQU  $78
+XSAVE2 .EQU  $7A
+XSAVE3 .EQU  $7C
+XSAVE4 .EQU  $7D
+XSAVE5 .EQU  $7E
+XSAVE6 .EQU  $7F
+BUFEND .EQU  $80
+KEYSAV .EQU  $82
+RETSTK .EQU  $84
+BUF0AD .EQU  $86
+BUF1AD .EQU  $88
+RNDM   .EQU  $8A
+FSESW  .EQU  $8B
+       .OR  $0200
+HARDST JMP  ENTRY1 
+SOFTST JMP  ENTRY2
+RAMSIZ DS   2'0000'
+INITDP DS   2'0000'
+INITPS DS   2'0000'
+INITRS DS   2'0000'
+INITB0 DS   2'0000'
+INITB1 DS   2'0000'
+INITKB DS   2'0000'
+INITDM DS   1'$20'
+DEQJMP JMP  STORE
+DISPLY JMP  PUTCHR
+KEYIN  JMP  GETCHR
+CLEAR  JMP  CRTNEW
+DICTLT @    =SEMIS
+ERRJMP JMP BNDERR
+ADXJMP JMP  ADDX
+FDLJMP JMP  FINDEL
+SKDJMP JMP  SKIPDM
+TITLE1 DS  'SPHERE FORTH  VER 1.1 SER# 000'
+       DS   1'04'
+TITLE2 DS  '(C) 1978 PROGRAMMA CONSULTANTS'
+       DS   1'04'
+TITL25 DS  '**** ALL  RIGHTS RESERVED ****'
+       DS   1'04'
+TITLE3 DS   'READY'
+       DS   1'04'
+TITLE4 DS   'OK'
+       DS   1'04'
+TITLE5 DS   'ERROR 0'
+ERRTYP DS   ' '
+       DS   1'04'
+TITLE6 DS   'BREAK'
+       DS   1'04'
+TITLE7 DS   'SOFTSTART'
+       DS   1'04'
+* NON-MASKABLE INTERRUPT RTN
+BRKRTN NOP
+       JSR  CRLF
+       LDX  =TITLE6
+       STX  MSGADR
+       JSR  MSG
+       JMP  DEBUG
+* ILLEGAL ENTRY ROUTINE
+ABORT1 NOP
+       LDAA ='A'
+       STAA MACHST
+       JSR  CRLF
+       JSR  CRLF
+       LDX  =WORD1
+       STX  MSGADR
+       JSR  MSG
+       LDAA ='?'
+       JSR  DISPLY
+ABORT2 JSR  CRLF
+       JSR  CRLF
+* DE-CHAIN IF COMPILE ERROR
+       LDX  CHAIN
+       TST  0,X
+       BNE  EN3JMP
+       STX  DICTIN
+       LDX  4,X
+       STX  CHAIN
+EN3JMP JMP  ENTRY3
+* MAIN (HARDSTART) ENTRY
+ENTRY1 LDS  =$01FF
+       LDAA INITDM
+       STAA DELIM
+       LDX  =$0010
+       STX  BASE
+       LDAA =$7E
+       STAA BREAK
+       LDX  =BRKRTN
+       STX  BRKADR
+       LDX  RAMSIZ
+       BNE  RAMTOP
+* FIND TOP OF THIS CPU'S RAM
+       LDX  =SEED
+       LDAA =$FF
+       CLRB
+FINTOP INX
+       STAA 0,X
+       CMPA 0,X
+       BNE  RAMTOP
+       STAB 0,X
+       CMPB 0,X
+       BEQ  FINTOP
+RAMTOP STX  RAMSIZ
+* TEST FOR USER INIT MODS
+       LDX  =INITDP
+       CLRA 
+TSTALL ORAA 0,X
+       INX
+       CPX  =INITDM
+       BNE  TSTALL
+       STAA DFAULT
+       BNE  RAMFIN
+* SET INITIALIZATION DEFAULTS
+       LDX  =RAMSIZ
+       LDAB 0,X
+       DECB
+       STAB 12,X
+       DECB
+       DECB
+       STAB 10,X
+       DECB
+       DECB
+       STAB 8,X
+       DECB
+       STAB 6,X
+       DECB
+       CLR  5,X
+       DEC  5,X
+       STAB 4,X
+       LDX  =SEED
+       STX  INITDP
+RAMFIN LDX  INITDP
+       STX  DICTIN
+       LDX  DICTLT
+       STX  CHAIN
+       STAA MACHST
+       JSR  CLEAR
+       LDX  =TITLE1
+       STX  MSGADR
+       JSR  MSG
+       JSR  CRLF
+       LDX  =TITLE2
+       STX  MSGADR
+       JSR  MSG
+       JSR  CRLF
+       LDX  =TITL25
+       STX  MSGADR
+       JSR  MSG
+       JSR  CRLF
+       JSR  CRLF
+       JMP  ENTRY3
+* SOFTSTART ENTRY
+ENTRY2 LDAA ='S'
+       STAA MACHST
+       LDS  =$01FF
+ENTRY3 LDAA INITDM
+       STAA DELIM
+       CLR  STATUS
+       LDAA =$04
+       STAA HEX04
+       CLR  FSESW
+       LDX  INITRS
+       STX  RETSTK
+       LDX  INITPS
+       STX  PARMST
+       LDX  INITKB
+       STX  SCREEN
+       LDAB =$01
+       CLRA
+       JSR  ADDX
+       STX  BUFEND
+       LDX  INITB0
+       STX  BUF0AD
+       LDX  INITB1
+       STX  BUF1AD
+       LDAA ='S'
+       CMPA MACHST
+       BEQ  BYPAS1
+       JMP  BYPAS2
+BYPAS1 JSR  CLEAR
+       LDX  =TITLE7
+       STX  MSGADR
+       JSR  MSG
+       JSR  CRLF
+BYPAS2 LDX  =TITLE3
+       STX  MSGADR
+       JSR  MSG
+       JSR  CRLF
+       JSR  CRLF
+* MAIN EXECUTION LOOP
+INPUT1 JSR  GETBUF
+       LDX  SCREEN
+       STX  KEYBUF
+       JSR  PARSER
+       JMP  INPUT1
+* KEYBOARD INPUT ROUTINE
+GETBUF LDX  SCREEN
+GETBU2 STX  XSAVE1
+       LDX  CSRPTR
+       LDAA 0,X
+       STAA WORSAV
+       JSR  KEYIN
+       INC  RNDM
+       LDX  CSRPTR
+       ANDA =$7F
+       CMPA =$0D
+       BEQ  PADSTR
+       STAA 0,X
+       INX
+       JSR  CSRTST
+       LDX  XSAVE1
+       CMPA =$08
+       BEQ  BACKEY
+       CMPA =$5F
+       BEQ  DELETE
+       CMPA =$18
+       BEQ  CLRKEY
+       CMPA =$11
+       BEQ  CSRUP
+       CMPA =$12
+       BEQ  CSRRT
+       CMPA =$13
+       BEQ  CSRDWN
+       CMPA =$14
+       BEQ  CSRLFT
+       TST  FSESW
+       BNE  GETBU2
+       STAA 0,X
+       INX
+       CPX  BUFEND
+       BNE  GETBU2
+ERROR1 LDAB =$34 
+       JSR  BNDERR
+* PADS KEYBUF WITH DELIM & CR
+PADSTR LDX  XSAVE1
+       LDAB DELIM
+       STAB 0,X
+       INX
+       CPX  BUFEND
+       BEQ  ERROR1
+       STAA 0,X
+       CLR  FSESW
+       RTS
+* REMOVES ONE BYTE FROM SCREEN
+BLANK  LDX  CSRPTR
+       DEX
+       STX  CSRPTR
+       LDAA DELIM
+       STAA 0,X
+       RTS
+* REMOVES ONE BYTE FROM KEYBUF
+* AND ONE BYTE FROM SCREEN
+BACKSP LDX  XSAVE1
+       CPX  SCREEN
+       BEQ  BAKOUT
+       DEX
+       STX  XSAVE1
+       LDAA DELIM
+       STAA 0,X
+       BSR  BLANK
+BAKOUT RTS
+* BACKSPACE KEY ROUTINE
+BACKEY BSR  BLANK
+       BSR  BACKSP
+       LDX  XSAVE1
+       JMP  GETBU2
+* DELETE KEY ROUTINE
+DELETE BSR  BLANK
+DELET1 BSR  BACKSP
+       BEQ  GBJMP
+       BRA  DELET1
+* CLEAR KEY ROUTINE
+CLRKEY JSR  CRTNEW
+       JMP  ENTRY3
+GBJMP  JMP  GETBUF
+CSRUP  LDAB =$FF
+       LDAA =$E0
+       BRA  CSRMOV
+CSRRT  CLRB
+       LDAA =$01
+       BRA  CSRMOV
+CSRDWN CLRB
+       LDAA =$20
+       BRA  CSRMOV
+CSRLFT LDAA =$FF
+       TAB
+* COMMON CURSER ROUTINE
+CSRMOV LDX  CSRPTR
+       DEX
+       STX  CSRPTR
+       STAA XSAVE6
+       LDAA WORSAV
+       STAA 0,X
+       LDAA XSAVE6
+       JSR  ADDX
+       CMPB =$E0
+       BCS  CSRBAD
+       CMPB =$E2
+       BCC  CSRBAD
+       STX  CSRPTR
+CSRBAD LDX  XSAVE1
+       JMP  GETBU2
+* PICKUP ONE WORD FROM KEYBUF
+TOKEN  INC  RNDM
+       LDAA DELIM
+       STAA WORD3
+       STAA WORD4
+       LDX  =WORD1
+       STX  XSAVE2
+       LDX  KEYBUF
+       LDAB =4
+TOKEN1 LDAA 0,X
+       INX
+       STX  XSAVE1
+       LDX  XSAVE2
+       STAA 0,X
+       INX
+       STX  XSAVE2
+       LDX  XSAVE1
+       CMPA DELIM
+       BEQ  TOKEN3
+       DECB
+       BNE  TOKEN1
+TOKEN3 RTS
+* SEARCH DICTIONARY FOR TOKEN
+SEARCH JSR  TOKEN
+       LDX  CHAIN
+       STX  STKPTR
+       STX  XSAVE1
+SRCH1  LDX  =WORD1
+       STX  XSAVE2
+       LDAB =3
+       LDX  XSAVE1
+       CLR  IMMEDI
+       LDAA 0,X
+       BPL  3+*
+       INC  IMMEDI
+       ANDA =$7F
+       LDX  XSAVE2
+       CMPA 0,X
+       BNE  SRCH3
+SRCH2  LDX  XSAVE1
+       INX
+       STX  XSAVE1
+       LDAA 0,X
+       LDX  XSAVE2
+       INX
+       STX  XSAVE2
+       CMPA 0,X
+       BNE  SRCH3
+       DECB
+       BNE  SRCH2
+       CLC
+       LDX  XSAVE1
+       INX
+       INX
+       INX
+       STX  STKPTR
+       CLC
+       RTS
+SRCH3  LDX  STKPTR
+       LDX  4,X
+       STX  STKPTR
+       STX  XSAVE1
+       BNE  SRCH1
+       SEC
+       RTS
+* CONVERT ASCII TO BASE
+NUMBER CLR  SAVE1
+       CLR  SAVE2
+       CLR  SIGN
+       INC  RNDM
+       LDX  KEYBUF
+       LDAA 0,X
+       CMPA ='-'
+       BNE  NUMB1
+       INC  SIGN
+       BRA  NUMB2
+NUMB1  CMPA ='+'
+       BNE  NUMB3
+NUMB2  INX
+       LDAA 0,X
+NUMB3  CMPA DELIM
+       BEQ  NUMEND
+       CLR  SAVE3
+       CLR  SAVE4
+       LDAA BASE2
+       STAA SAVE5
+NUMB4  CLC
+       LDAA SAVE1
+       ADCA SAVE3
+       STAA SAVE3
+       LDAA SAVE2
+       ADCA SAVE4
+       STAA SAVE4
+       BCS  NUMB7
+       DEC  SAVE5
+       BNE  NUMB4
+       LDAA 0,X
+       SUBA =$30
+       BCS  NUMB7
+       SBCA =$0A
+       BCS  NUMB5
+       SBCA =$07
+       BCS  NUMB7
+NUMB5  ADDA =$0A
+       CMPA BASE2
+       BCC  NUMB7
+       ADDA SAVE3
+       STAA SAVE1
+       LDAA =$00
+       ADCA SAVE4
+       STAA SAVE2
+       BCC  NUMB2
+       RTS
+NUMEND LDAA SIGN
+       BEQ  NUMB6
+       CLRA      
+       SUBA SAVE1
+       STAA SAVE1
+       LDAA =$00
+       SBCA SAVE2
+       STAA SAVE2
+NUMB6  CLC
+       RTS
+NUMB7  SEC
+       RTS
+* FIND NEXT DELIM IN KEYBUF
+FINDEL LDX  KEYBUF
+FINDE1 LDAA 0,X
+       CMPA DELIM
+       BEQ  EXIT2
+       CMPA =$0D
+       BEQ  EXIT2
+       JSR  BUFFER
+       BRA  FINDE1
+BUFFER INX
+       STX  KEYBUF
+       CPX  BUFEND
+       BEQ  ERROR2
+EXIT2  RTS
+EXIT3  JSR  CRLF
+       RTS
+* FIND NEXT NON-DELIM IN KEYBUF
+SKIPDM LDX  KEYBUF
+       LDAA DELIM
+       CMPA 0,X
+       BNE  EXIT2
+       JSR  BUFFER
+       BRA  SKIPDM
+* STORE ACCUM A ON DICTIONARY
+STORE  STX  SAVE5
+       LDX  DICTIN
+       STAA 0,X
+       INX
+       STX  DICTIN
+       LDX  SAVE5
+       RTS
+ERROR2 LDAB =$34 
+       JSR  BNDERR
+* INTERPRET KEYBUF DATA
+PARSER JSR  SKIPDM
+       LDAA 0,X
+       CMPA =$0D
+       BEQ  EXIT3
+       LDAA STATUS
+       CMPA =$02
+* IMMED MODE: GO EXECUTE
+       BEQ  MATCH
+       BCC  ERROR3
+* SEE IF IT'S A DICTIONARY WORD
+       JSR  SEARCH
+       BCC  MATCH2
+* SEE IF IT'S A NUMBER
+       JSR  NUMBER
+       BCS  ERROR3
+       TST  STATUS
+* EXEC MODE: PLACE NUMB ON STK 
+       BEQ  PARSE2
+* COMP MODE: PUT IT IN DICT.
+       LDAA =$86
+       JSR  STORE
+       LDAA SAVE1
+       JSR  CONST4
+       LDAA =$86
+       JSR  STORE
+       LDAA SAVE2
+       JSR  CONST4
+       JMP  EXEC3
+ERROR3 JSR  ABORT1
+PARSE2 JSR  PUSH
+       JMP  EXEC3
+* PUT SAVE1 AND SAVE2 ON STACK
+PUSH   LDAA SAVE1
+PUSH2  JSR  PARDEC
+       STAA 0,X
+       LDAA SAVE2
+       JSR  PARDEC
+       STAA 0,X
+       RTS
+* DEC STACK POINTER
+PARDEC LDX  PARMST
+       DEX
+       STX  PARMST
+       INC  RNDM
+       RTS
+* LOAD CURRENT AND INC STK PTR 
+PARMPL LDX  PARMST
+       INX
+       INX
+       STX  PARMST
+       DEX
+       DEX
+       INC  RNDM
+       RTS
+* FOR IMMEDIATE MODE
+MATCH  JSR  SEARCH
+       BCC  EXEC
+       JSR  NUMBER
+       BCS  ERROR3
+       BRA  PARSE2
+MATCH2 TST  IMMEDI
+       BNE  EXEC
+       TST  STATUS
+       BEQ  EXEC
+* COMPILE MODE
+       LDAA =$BD
+       JSR  STORE
+       LDAA STKPTR
+       JSR  STORE
+       LDAA STKPT2
+       JSR  STORE
+       JMP  EXEC3
+* GO EXECUTE THE WORD
+EXEC   LDX  STKPTR
+       JSR  0,X
+       JSR  BNDYCK
+EXEC3  JSR  FINDEL
+       JMP  PARSER
+* ADD NEW WORD TO DICTIONARY
+NEWORD TST  STATUS
+       BEQ  3+*
+       JSR  ABORT1
+       STX  XSAVE3
+       JSR  FINDEL
+       JSR  SKIPDM
+       LDX  DICTIN
+       STX  SAVE1
+       JSR  TOKEN
+       LDAA WORD1
+       JSR  STORE
+       LDAA WORD2
+       JSR  STORE
+       LDAA WORD3
+       JSR  STORE
+       LDAA WORD4
+       JSR  STORE
+       LDAA CHAIN
+       JSR  STORE
+       LDAA CHAIN2
+       JSR  STORE
+       LDX  SAVE1
+       STX  CHAIN
+       LDX  XSAVE3
+       RTS
+* ADDS BA REGISTERS TO X REG
+ADDX   STX  XSAVE5
+       ADDA XSAVE6
+       ADCB XSAVE5
+       STAA XSAVE6
+       STAB XSAVE5
+       LDX  XSAVE5
+       INC  RNDM
+       RTS
+* CHECK FOR BOUNDRY VIOLATION
+BNDYCK INC  RNDM
+       LDAA ='E'
+       STAB MACHST
+       TST  DFAULT
+       BNE  BNDEND
+       LDAB =$30
+       LDAA RETSTK
+       CMPA INITB0
+       BPL  BNDERR
+       INCB
+       CMPA INITRS
+       BMI  BNDERR
+       INCB
+       LDAA PARMST
+       CMPA INITRS
+       BPL  BNDERR
+       LDAA DICTI2
+       LDAB DICTIN
+       SUBA PARMS2
+       SBCB PARMST
+       BMI  BNDEND
+       LDAB =$33
+BNDERR STAB ERRTYP
+       JSR  CRLF
+       JSR  CRLF
+       LDX  =TITLE5
+       STX  MSGADR
+       JSR  MSG
+       JMP  ABORT2
+BNDEND RTS
+* BEGINNING OF FORTH DICTIONARY
+CARRET DS   'CR  '
+       DS   2'$0000'
+CRLF   LDX  CSRPTR
+       JMP  CRLFX
+STRING DS   'MSG '
+       @    CARRET
+MSG0   JSR  PARMPL
+       LDX  0,X
+       BRA  MSG1
+MSG    LDX  MSGADR
+MSG1   LDAA 0,X
+       CMPA =$04
+       BEQ  MSG2
+       STX  XSAVE3
+       JSR  DISPLY
+       LDX  XSAVE3
+       INX  
+       BRA  MSG1
+MSG2   RTS
+COLON  DS   1'$BA'
+       DS   '   '
+       @    STRING
+       JSR  NEWORD
+       STX  XSAVE3
+       LDX  CHAIN
+       CLR  0,X
+       LDAA WORD1
+       STAA NAMSAV
+       INC  STATUS
+       LDX  XSAVE3
+       RTS
+SEMICL DS   1'$BB'
+       DS   '   '
+       @    COLON
+       TST  STATUS
+       BNE  3+*
+       JSR  ABORT1
+       CLR  STATUS
+       LDAA NAMSAV
+       STX  XSAVE3
+       LDX  CHAIN
+       ORAA 0,X
+       STAA 0,X
+       LDX  XSAVE3
+       JMP  CONST2
+INTEGR DS   'VARI'
+       @    SEMICL
+       JSR  NEWORD
+       LDAA =$BD
+       JSR  STORE
+       LDX  =EXINTG
+       STX  XSAVE3
+       LDAA XSAVE3
+       JSR  STORE
+       LDAA XSAVE4
+       JSR  STORE
+INTGR1 LDX  PARMST
+       LDAA 0,X
+       JSR  STORE
+       INX
+       STX  PARMST
+INTGR2 LDX  PARMST
+       LDAA 0,X
+       JSR  STORE
+       INX  
+       STX  PARMST
+       RTS
+EXINTG PULA
+       STAA SAVE2
+       PULA
+       JMP  PUSH2
+CONST  DS   'CONS'
+       @    INTEGR
+       JSR  NEWORD
+       LDX  PARMST
+       INX
+       STX  PARMST
+       JSR  CONST3
+       JSR  PARDEC
+       JSR  CONST3
+       LDX  PARMST
+       INX
+       INX
+       STX  PARMST
+CONST2 LDAA =$39
+       JSR  STORE
+       RTS
+CONST3 LDAA =$86
+       JSR  STORE
+       LDAA 0,X
+CONST4 JSR  STORE
+       LDX  =PARDEC
+       STX  XSAVE5
+       LDAA =$BD
+       JSR  STORE
+       LDAA XSAVE5
+       JSR  STORE
+       LDAA XSAVE6
+       JSR  STORE
+       LDAA =$A7
+       JSR  STORE
+       CLRA
+       JSR  STORE
+       RTS
+TICK   DS   1'$27'
+       DS   '   '
+       @    CONST
+       STX  XSAVE3
+       JSR  FINDEL
+       JSR  SKIPDM
+       JSR  SEARCH
+       BCC  TICK2
+       JSR  ABORT1
+TICK2  JSR  PARDEC
+       LDAA STKPT2
+       STAA 0,X
+       JSR  PARDEC
+       LDAA STKPTR
+       STAA 0,X
+       LDX  XSAVE3
+       RTS
+IMMED  DS   1'$C9'
+       DS   'MME'
+       @    TICK
+       LDAA NAMSAV
+       ORAA =$80
+       STAA NAMSAV
+       RTS
+COMMA  DS   ',   '
+       @    IMMED
+       JMP  INTGR1
+STATE  DS   1'$DB'
+       DS   '   '
+       @    COMMA
+LBRAK  LDAA STATUS
+       BEQ  STATE3
+       CMPA =$01
+       BEQ  STATE2
+       LDAA =$01
+       STAA STATUS
+       RTS
+STATE2 INC  STATUS
+       RTS
+STATE3 JSR  ABORT1
+RBRAK  DS   1'$DD'
+       DS   '   '
+       @    STATE
+       BRA  LBRAK
+LEAST  DS   'C,  '
+       @    RBRAK
+       LDX  PARMST
+       INX        
+       STX  PARMST
+       JMP  INTGR2
+CLRIT  DS   'CLR '
+       @    LEAST
+CRTNEW JSR  HOMEX
+CRTNE1 LDAB DELIM
+       LDX  =CRTEND
+CRTNE2 DEX
+       STAB 0,X
+       CPX  CSRPTR
+       BNE  CRTNE2
+       RTS        
+BKSP   DS   'BKSP'
+       @    CLRIT
+       JMP  BLANK
+LBF    DS   'BUFL'
+       @    BKSP
+LBF0   LDAA =$E0 
+LBF1   STAA SAVE2
+       CLR  SAVE1
+       JMP  PUSH
+HBF    DS   'BUFH'
+       @    LBF
+HBF1   LDAA =$E2 
+       BRA  LBF1
+LDBF   DS   'LDBF'
+       @    HBF
+LDB1   JSR  PARMPL
+       LDX  0,X
+       STX  BFRSZE
+       JSR  PARMPL
+       LDX  0,X
+       STX  BFRPTR
+       RTS
+SAVE   DS   'SAVE'
+       @    LDBF
+       BSR  SAVRTN
+       JSR  CRLF
+       LDX  CSRPTR
+       LDAB =$FF
+       LDAA =$E0
+       JSR  ADDX
+       STX  CSRPTR
+       JSR  CRTNE1
+       LDAA =';'
+       LDAB ='S'
+       STAA 0,X
+       STAB 1,X
+       JMP  WRTBLK
+SAVRTN JSR  LBF0
+       JSR  HBF1
+       JSR  LDB1
+       LDX  =$F060
+       STX  ACIANO
+       LDAA =00
+       STAA NOPRNT
+       JSR  PARMPL
+       LDX  0,X   
+       STX  BLKNAM
+       JSR  INTLZ
+       RTS
+LOAD   DS   'LOAD'
+       @    SAVE
+       BSR  SAVRTN
+       JSR  RDBLK
+       LDX  =$E1C0
+       STX  CSRPTR
+       RTS       
+XEQ    DS   'EXEC'
+       @    LOAD
+       LDX  KEYBUF
+       STX  KEYSAV
+       JSR  LBF0
+       JSR  HBF1
+       JSR  LDB1
+       STX  KEYBUF
+       LDX  BFRSZE
+       STX  BUFEND
+       JSR  PARSER
+       LDX  KEYSAV
+       STX  KEYBUF
+       LDAB =$01
+       CLRA
+       JSR  ADDX 
+       STX  BUFEND
+       RTS
+SEMIS  DS   ';S  '
+       @    XEQ
+       PULA
+       PULA
+       RTS
+SEED   DS   1
+END
