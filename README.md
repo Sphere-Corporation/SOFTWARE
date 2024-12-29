@@ -21,9 +21,8 @@ The table below contains descriptions and links to the repositories.
 |3. | 6800 Forth              | [Local](./asm/6800-forth/)<br>[Site](https://sphere.computer/resources/forth/6800_Forth_source.pdf)
 |4. | PIE Text Editor |         [Local](./asm/PIE/)<br>[Site](https://sphere.computer/resources/pie_editor_source.asm)
 |5. | Cassette Firmware Source |[Local](./asm/TAPE/)<br>[Site](https://sphere.computer/resources/pie_editor_source.asm)
-|6. | EXORSim development simulator |[Local](./exorsim/)<br>[Site](https://github.com/jhallen/exorsim)
-|7. | PDS-V3N firmware source code |[Local](./firmware/)<br>[Site](https://sphere.computer/resources/firmware/PDS-V3N.a68)
-|8. | 1702A-Programmer |[Local](./kicad-1702a-programmer/)
+|6. | PDS-V3N firmware source code |[Local](./firmware/)<br>[Site](https://sphere.computer/resources/firmware/PDS-V3N.a68)
+|7. | 1702A-Programmer |[Local](./kicad-1702a-programmer/)
 
 ### Note:
 Whilst I do not wish to repeat a "collection" of Sphere-1 resources (for that, you should seek [Sphere Resources](https://sphere.computer/resources.html) by Ben Zotto, I did want to collect some useful stuff to me together as a convenience.
